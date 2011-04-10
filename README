@@ -1,0 +1,23 @@
+Shortfin Web Server
+------------------
+  by Timothy E. Johansson, 2011
+
+Description:
+  Shortfin is a fast and lightweight static web server and reverse proxy.
+
+
+Tested on:
+-  Linux (Ubuntu)
+  
+
+Install
+  See INSTALL
+
+
+How to start the server
+	# shortfin -c /etc/shortfin/shortfin.conf
+	
+	or
+	
+	# /etc/init.d/shortfin start
+
