@@ -3,7 +3,7 @@ Shortfin Web Server
   by Timothy E. Johansson, 2011
 
 Description:
-  Shortfin is a fast and lightweight static web server and reverse proxy.
+  Shortfin is a fast and lightweight static web server.
 
 
 Tested on:
@@ -11,7 +11,9 @@ Tested on:
   
 
 Install
-  See INSTALL
+	# ./configure
+ 	# make
+ 	# make install
 
 
 How to start the server
