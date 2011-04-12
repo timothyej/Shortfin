@@ -2,24 +2,24 @@ TODO - Shortfin
 --------------
 
 * SHARED_MEM_KEY should be pid
-* Test mmap()
+* Test mmap() compared to sendfile()
 * Finish the proxy module
 * Finish error/warning/access logging
 * Port to xBSD
 * Some HTTP/1.1 functions (see below)
 * HTTP Keep-Alive (Timeout?)
-* Date header
+* Add some HTTP/1.1 features
 
 
+HTTP/1.1
+--------
 
-HTTP/1.1 compliance
-```````````````````
-- [ ] Sends 206 for Range Requests
-- [ ] Sends 304 for If-Modified Requests
-- [ ] Sends 400 for missing Host on HTTP/1.1 requests
-- [ ] Sends 400 for broken Request-Line
-- [ ] Sends 411 for missing Content-Length on POST requests
-- [ ] Sends 416 for "out-of-range" on Range: Header
-- [ ] Sends 501 for request-method != (GET|POST|HEAD)
-- [ ] Sends 505 for protocol != HTTP/1.0 or HTTP/1.1
-- [ ] Sends Date: on every requests
+* [ ] Sends 206 for Range Requests
+* [ ] Sends 304 for If-Modified Requests
+* [ ] Sends 400 for missing Host on HTTP/1.1 requests
+* [ ] Sends 400 for broken Request-Line
+* [ ] Sends 411 for missing Content-Length on POST requests
+* [ ] Sends 416 for "out-of-range" on Range: Header
+* [ ] Sends 501 for request-method != (GET|POST|HEAD)
+* [ ] Sends 505 for protocol != HTTP/1.0 or HTTP/1.1
+* [ ] Sends Date: on every requests

@@ -99,8 +99,8 @@ int connection_handle(connection *conn) {
 		response_build (srv, conn);
 
 		/* send to browser */
-		//if (conn->response->http_packet_len <= srv->master->config->write_buffer_size) {
-		if (1==1) {
+		if (conn->response->http_packet_len <= srv->master->config->write_buffer_size) {
+		//if (1==1) {
 			/* small buffer, send it with one call */
 			if (conn->response->cached) {
 				/* using sendfile on a cached file */

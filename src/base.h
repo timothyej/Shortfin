@@ -10,7 +10,7 @@
 
 #include "cache.h"
 
-/* start key to attach shared memory */
+/* start key to attach shared memory TODO: use pid instead */
 #define SHARED_MEM_KEY 8910
 
 
