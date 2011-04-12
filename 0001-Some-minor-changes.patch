@@ -1,0 +1,36 @@
+From 077b9ac9d00cc9609e0ae6cfd18c615bb33b4512 Mon Sep 17 00:00:00 2001
+From: Timothy Johansson <timothy.ejohansson@gmail.com>
+Date: Mon, 11 Apr 2011 21:17:01 +0200
+Subject: [PATCH 1/2] Some minor changes
+
+---
+ README |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/README b/README
+index 10ea682..b46bac4 100644
+--- a/README
++++ b/README
+@@ -3,7 +3,7 @@ Shortfin Web Server
+   by Timothy E. Johansson, 2011
+ 
+ Description:
+-  Shortfin is a fast and lightweight static web server and reverse proxy.
++  Shortfin is a fast and lightweight static web server.
+ 
+ 
+ Tested on:
+@@ -11,7 +11,9 @@ Tested on:
+   
+ 
+ Install
+-  See INSTALL
++	# ./configure
++ 	# make
++ 	# make install
+ 
+ 
+ How to start the server
+-- 
+1.7.1
+
