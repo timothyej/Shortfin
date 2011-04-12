@@ -155,6 +155,11 @@ typedef struct {
 } epoll_struct;
 
 typedef struct {
+	int fd;
+	struct epoll_event **events;
+} event_handler;
+
+typedef struct {
 	int type;
 	char *value;
 } proxy_rule;

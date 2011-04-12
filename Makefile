@@ -61,7 +61,7 @@ am_shortfin_OBJECTS = src/master_server.$(OBJEXT) src/server.$(OBJEXT) \
 	src/response.$(OBJEXT) src/connection.$(OBJEXT) \
 	src/status_codes.$(OBJEXT) src/mime_types.$(OBJEXT) \
 	src/config_file.$(OBJEXT) src/proxy.$(OBJEXT) \
-	src/lock.$(OBJEXT)
+	src/lock.$(OBJEXT) src/events.$(OBJEXT)
 shortfin_OBJECTS = $(am_shortfin_OBJECTS)
 shortfin_LDADD = $(LDADD)
 SCRIPTS = $(dist_noinst_SCRIPTS)
@@ -176,7 +176,7 @@ top_builddir = .
 top_srcdir = .
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
-shortfin_SOURCES = src/master_server.c src/server.c src/safe.c src/worker.c src/socket.c src/cache.c src/request.c src/response.c src/connection.c src/status_codes.c src/mime_types.c src/config_file.c src/proxy.c src/lock.c
+shortfin_SOURCES = src/master_server.c src/server.c src/safe.c src/worker.c src/socket.c src/cache.c src/request.c src/response.c src/connection.c src/status_codes.c src/mime_types.c src/config_file.c src/proxy.c src/lock.c src/events.c
 dist_noinst_SCRIPTS = autogen.sh
 all: all-am
 
@@ -300,6 +300,8 @@ src/config_file.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/proxy.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 src/lock.$(OBJEXT): src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
+src/events.$(OBJEXT): src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 shortfin$(EXEEXT): $(shortfin_OBJECTS) $(shortfin_DEPENDENCIES) 
 	@rm -f shortfin$(EXEEXT)
 	$(LINK) $(shortfin_OBJECTS) $(shortfin_LDADD) $(LIBS)
@@ -309,6 +311,7 @@ mostlyclean-compile:
 	-rm -f src/cache.$(OBJEXT)
 	-rm -f src/config_file.$(OBJEXT)
 	-rm -f src/connection.$(OBJEXT)
+	-rm -f src/events.$(OBJEXT)
 	-rm -f src/lock.$(OBJEXT)
 	-rm -f src/master_server.$(OBJEXT)
 	-rm -f src/mime_types.$(OBJEXT)
@@ -327,6 +330,7 @@ distclean-compile:
 include src/$(DEPDIR)/cache.Po
 include src/$(DEPDIR)/config_file.Po
 include src/$(DEPDIR)/connection.Po
+include src/$(DEPDIR)/events.Po
 include src/$(DEPDIR)/lock.Po
 include src/$(DEPDIR)/master_server.Po
 include src/$(DEPDIR)/mime_types.Po

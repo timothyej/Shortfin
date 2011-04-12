@@ -39,7 +39,7 @@ src/master_server.o: src/master_server.c /usr/include/stdio.h \
  /usr/include/linux/errno.h /usr/include/asm/errno.h \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
  src/connection.h /usr/include/xlocale.h /usr/include/sys/sendfile.h \
- src/config_file.h
+ src/config_file.h src/events.h
 
 /usr/include/stdio.h:
 
@@ -224,3 +224,5 @@ src/connection.h:
 /usr/include/sys/sendfile.h:
 
 src/config_file.h:
+
+src/events.h:

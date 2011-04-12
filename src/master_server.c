@@ -19,6 +19,7 @@
 #include "response.h"
 #include "connection.h"
 #include "config_file.h"
+#include "events.h"
 
 
 master_server *master_serv; /* used by signal handler */
