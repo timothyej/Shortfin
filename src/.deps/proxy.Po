@@ -22,8 +22,8 @@ src/proxy.o: src/proxy.c src/proxy.h src/base.h /usr/include/sys/types.h \
  /usr/lib/gcc/i686-linux-gnu/4.4.5/include/stdarg.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
  /usr/include/bits/stdio.h /usr/include/bits/stdio2.h \
- /usr/include/semaphore.h /usr/include/bits/semaphore.h src/cache.h \
- src/safe.h
+ /usr/include/semaphore.h /usr/include/bits/semaphore.h \
+ /usr/include/sys/epoll.h src/cache.h src/safe.h
 
 src/proxy.h:
 
@@ -128,6 +128,8 @@ src/base.h:
 /usr/include/semaphore.h:
 
 /usr/include/bits/semaphore.h:
+
+/usr/include/sys/epoll.h:
 
 src/cache.h:
 

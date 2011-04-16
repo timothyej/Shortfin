@@ -22,7 +22,8 @@ src/lock.o: src/lock.c src/lock.h /usr/include/semaphore.h \
  /usr/include/_G_config.h /usr/include/wchar.h \
  /usr/lib/gcc/i686-linux-gnu/4.4.5/include/stdarg.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
- /usr/include/bits/stdio.h /usr/include/bits/stdio2.h src/cache.h
+ /usr/include/bits/stdio.h /usr/include/bits/stdio2.h \
+ /usr/include/sys/epoll.h src/cache.h
 
 src/lock.h:
 
@@ -127,5 +128,7 @@ src/base.h:
 /usr/include/bits/stdio.h:
 
 /usr/include/bits/stdio2.h:
+
+/usr/include/sys/epoll.h:
 
 src/cache.h:

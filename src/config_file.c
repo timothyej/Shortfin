@@ -303,7 +303,9 @@ int config_load_servers(char *filename, master_server *master_srv) {
 				
 						if (strcmp(key, "default") == 0) {
 							/* found default server */
-							master_srv->server_default = count-1;
+							if (atoi(value) == 1) {
+								master_srv->server_default = count-1;
+							}
 						}
 					}
 				}

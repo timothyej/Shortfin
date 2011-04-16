@@ -16,10 +16,10 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="Ninety4 is a very fast and lightweight static web server"
-NAME=ninety4
+DESC="Shortfin is a very fast and lightweight static web server"
+NAME=shortfin
 DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS="-c /etc/ninety4/ninety4.conf"
+DAEMON_ARGS="-c /etc/shortfin/shortfin.conf"
 SCRIPTNAME=/etc/init.d/$NAME
 PIDFILE=/var/run/$NAME.pid
 

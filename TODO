@@ -1,6 +1,7 @@
 TODO - Shortfin
 --------------
 
+* Fix worker performance
 * SHARED_MEM_KEY should be pid
 * Test mmap() compared to sendfile()
 * Finish the proxy module

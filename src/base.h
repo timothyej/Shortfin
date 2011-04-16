@@ -8,6 +8,17 @@
 #include <stdio.h>
 #include <semaphore.h>
 
+#define HAVE_SYS_EPOLL_H 1
+
+
+#ifdef HAVE_SYS_EPOLL_H
+	#include <sys/epoll.h>
+#elif defined(HAVE_SYS_EVENT_H)
+	#include <sys/types.h>
+	#include <sys/event.h>
+	#include <sys/time.h>
+#endif
+
 #include "cache.h"
 
 /* start key to attach shared memory TODO: use pid instead */
@@ -151,12 +162,14 @@ typedef struct {
 
 typedef struct {
 	int fd;
+#ifdef HAVE_SYS_EPOLL_H
 	struct epoll_event **events;
-} epoll_struct;
-
-typedef struct {
-	int fd;
-	struct epoll_event **events;
+#elif defined(HAVE_SYS_EVENT_H)
+	struct kevent *changes;
+	int nchanges;
+	struct kevent *events;
+	int nevents;
+#endif
 } event_handler;
 
 typedef struct {
@@ -263,7 +276,7 @@ typedef struct {
 	master_server *master_srv;	/* master server (configs and servers), not shared */
 	pid_t pid;			/* Process ID */
 	
-	int event_fd;			/* event fd - epoll, kqueue */
+	event_handler ev_handler;	/* event handler - epoll, kqueue */
 } worker;
 
 #endif

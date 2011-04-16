@@ -137,20 +137,20 @@ int response_build(server *srv, connection *conn) {
 				char *tmp_filename = malloc(strlen(srv->config->cache_dir)+strlen(tmp_name)+1);
 				sprintf (tmp_filename, "%s%s", srv->config->cache_dir, tmp_name); 
 				
-				/* try to open the file */
-				if ((f->fd = open(tmp_filename, 0)) == -1) {
+				/* check if it exists */
+				if (response_file_exist(tmp_filename) == 0) {
 					/* file not found, create one */
 					FILE *ff = fopen(tmp_filename, "w+"); /* open with write rights */
 					fwrite (resp->http_packet, 1, resp->http_packet_len, ff);
 					fclose (ff);
 					
-					/* open the file again */
-					if ((f->fd = open(tmp_filename, 0)) == -1) {
-						perror ("ERROR could not cache the file");
-					}
-					
 					/* increase the mem used counter */
 					srv->cache_used_mem += resp->http_packet_len;
+				}
+				
+				/* open the file again */
+				if ((f->fd = open(tmp_filename, 0)) == -1) {
+					perror ("ERROR could not cache the file");
 				}
 			
 				f->size = resp->http_packet_len;

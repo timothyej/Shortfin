@@ -22,17 +22,17 @@ src/master_server.o: src/master_server.c /usr/include/stdio.h \
  /usr/include/bits/signum.h /usr/include/bits/siginfo.h \
  /usr/include/bits/sigaction.h /usr/include/bits/sigcontext.h \
  /usr/include/bits/sigstack.h /usr/include/sys/ucontext.h \
- /usr/include/bits/sigthread.h src/config.h /usr/include/sys/epoll.h \
- /usr/include/stdint.h /usr/include/bits/wchar.h /usr/include/sys/mman.h \
+ /usr/include/bits/sigthread.h src/config.h /usr/include/sys/mman.h \
  /usr/include/bits/mman.h src/base.h /usr/include/sys/socket.h \
  /usr/include/sys/uio.h /usr/include/bits/uio.h \
  /usr/include/bits/socket.h /usr/include/bits/sockaddr.h \
  /usr/include/asm/socket.h /usr/include/asm-generic/socket.h \
  /usr/include/asm/sockios.h /usr/include/asm-generic/sockios.h \
  /usr/include/bits/socket2.h /usr/include/netinet/in.h \
- /usr/include/bits/in.h /usr/include/semaphore.h \
- /usr/include/bits/semaphore.h src/cache.h src/lock.h src/server.h \
- src/safe.h src/socket.h /usr/include/fcntl.h /usr/include/bits/fcntl.h \
+ /usr/include/stdint.h /usr/include/bits/wchar.h /usr/include/bits/in.h \
+ /usr/include/semaphore.h /usr/include/bits/semaphore.h \
+ /usr/include/sys/epoll.h src/cache.h src/lock.h src/server.h src/safe.h \
+ src/socket.h /usr/include/fcntl.h /usr/include/bits/fcntl.h \
  /usr/include/bits/stat.h /usr/include/bits/fcntl2.h \
  /usr/include/netinet/tcp.h src/request.h src/response.h \
  /usr/include/sys/stat.h /usr/include/errno.h /usr/include/bits/errno.h \
@@ -139,12 +139,6 @@ src/master_server.o: src/master_server.c /usr/include/stdio.h \
 
 src/config.h:
 
-/usr/include/sys/epoll.h:
-
-/usr/include/stdint.h:
-
-/usr/include/bits/wchar.h:
-
 /usr/include/sys/mman.h:
 
 /usr/include/bits/mman.h:
@@ -173,11 +167,17 @@ src/base.h:
 
 /usr/include/netinet/in.h:
 
+/usr/include/stdint.h:
+
+/usr/include/bits/wchar.h:
+
 /usr/include/bits/in.h:
 
 /usr/include/semaphore.h:
 
 /usr/include/bits/semaphore.h:
+
+/usr/include/sys/epoll.h:
 
 src/cache.h:
 

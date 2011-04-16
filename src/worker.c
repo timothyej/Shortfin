@@ -40,7 +40,7 @@ int worker_spawn(int number, master_server *master_srv) {
 	w->master_srv = master_srv;
 	
 	/* TODO: use rfork() on FreeBSD & OpenBSD */ 
-	if (clone(worker_server, child_stack+sizeof(child_stack) / sizeof(*child_stack), CLONE_FS | CLONE_FILES, w) == -1) { //| CLONE_VM
+	if (clone(worker_server, child_stack+sizeof(child_stack) / sizeof(*child_stack), CLONE_FS | CLONE_FILES, w) == -1) {
 		perror ("ERROR clone()");
 		return -1;
 	}
@@ -81,39 +81,25 @@ static int worker_server(worker *info) {
 	/* pre-setup worker connections */
 	conns = connection_setup(master_srv);
 	
-	/* event stuff (epoll, kqueue) */
-	epoll_struct *event_handler = malloc(sizeof(epoll_struct));
-	event_handler->events = malloc(master_srv->config->max_clients * sizeof(struct epoll_event*));
-	
-	struct epoll_event *events = event_handler->events;
-	struct epoll_event ev;
-	
-	for (i = 0; i < master_srv->config->max_clients; ++i) {
-		event_handler->events[i] = malloc(sizeof(struct epoll_event));
-		event_handler->events[i]->events = 0;
-	}
-	
-	if ((event_handler->fd = epoll_create(master_srv->config->max_clients)) == -1) {
-		perror ("ERROR epoll_create");
-		exit (1);
-	}
+	/* create a new event handler for this worker */
+	event_handler *ev_handler = events_create(master_srv->config->max_clients);
 
 	/* share the event fd */
-	w->event_fd = event_handler->fd;
+	w->ev_handler.fd = ev_handler->fd;
 	
 	/* entering main loop... */
 	while (master_srv->running) {
 		/* check for new data */
-		if ((nfds = epoll_wait(event_handler->fd, events, master_srv->config->max_clients, -1)) == -1) {
+		if ((nfds = events_wait(ev_handler, master_srv)) == -1) {
 			perror ("ERROR epoll_pwait");
 		}
 
 		for (i = 0; i < nfds; ++i) {
 			/* data received */
-			fd = events[i].data.fd;
+			fd = events_get_fd(ev_handler, i);
 			connection *conn = conns[fd];
 			
-			if (events[i].events & EPOLLRDHUP) {
+			if (events_closed(ev_handler, i)) {
 				/* the other end closed the connection */
 				conn->status = CONN_INACTIVE;
 			} 
@@ -126,8 +112,8 @@ static int worker_server(worker *info) {
 			
 			/* closing */
 			if (conn->status == CONN_INACTIVE) {
-				if (epoll_ctl(event_handler->fd, EPOLL_CTL_DEL, fd, NULL) == -1) {
-					perror ("ERROR epoll del");
+				if (events_del_event(ev_handler, fd) == -1) {
+					perror ("ERROR events_del_event");
 				}
 
 				close (fd);
@@ -137,13 +123,8 @@ static int worker_server(worker *info) {
 	
 	printf ("Shutting down process #%d...\n", num+1);
 	
-	/* free event stuff (epoll, kqueue) */
-	for (i = 0; i < master_srv->config->max_clients; ++i) {
-		free (event_handler->events[i]);
-	}
-	
-	free (event_handler->events);
-	free (event_handler);
+	/* free event handler */
+	events_free (ev_handler, master_srv->config->max_clients);
 
 	/* TODO: free all connections */
 	/* ... */

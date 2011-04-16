@@ -5,8 +5,6 @@
 
 #include "config.h"
 
-#include <sys/epoll.h>
-
 #include <sys/mman.h>
 
 #include "base.h"
@@ -200,16 +198,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	
-	/* event stuff for listening */
-	epoll_struct epoll;
-	struct epoll_event ev;
-	struct epoll_event events[master_srv->config->max_clients];
+	/* create a new event handler for listening */
+	event_handler *ev_handler = events_create(master_srv->config->max_clients);
 	
-	if ((epoll.fd = epoll_create(master_srv->config->max_clients)) == -1) {
-		perror ("ERROR epoll_create");
-		exit (1);
-	}
-
 	/* loading virtual servers from config */
 	printf ("Loading virtual servers...\n");
 	config_load_servers (master_srv->config_file, master_srv);
@@ -237,12 +228,9 @@ int main(int argc, char *argv[]) {
 				exit (1);
 			}
 		
-			/* add it to the event list */
-			ev.events = EPOLLIN;
-			ev.data.fd = srv->server_socket->fd;
-	
-			if (epoll_ctl(epoll.fd, EPOLL_CTL_ADD, srv->server_socket->fd, &ev) == -1) {
-				perror ("ERROR epoll_ctl: listen_sock");
+			/* add it to the event handler */
+			if (events_add_event(ev_handler, srv->server_socket->fd) == -1) {
+				error ("ERROR events_add_event");
 				exit (1);
 			}
 
@@ -302,13 +290,13 @@ int main(int argc, char *argv[]) {
 	/* the server is up and running, entering the main loop... */
 	while (master_srv->running) {
 		/* wait for a new connection */
-		if ((nfds = epoll_wait(epoll.fd, &events, master_srv->config->max_clients, -1)) == -1) {
+		if ((nfds = events_wait(ev_handler, master_srv)) == -1) {
 			perror ("ERROR epoll_pwait");
 		}
 
 		for (i = 0; i < nfds; ++i) {
 			/* new connection */
-			fd = events[i].data.fd;
+			fd = events_get_fd(ev_handler, i);
 
 			/* get the server that is listening on this fd */
 			server *srv = master_srv->servers_by_fd[fd];
@@ -323,13 +311,10 @@ int main(int argc, char *argv[]) {
 				
 				/* set socket options */
 				socket_setup (master_srv, fd);
-				
-				/* add it to the worker's event list */	
-				ev.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
-				ev.data.fd = fd;
-		
-				if (epoll_ctl(w->event_fd, EPOLL_CTL_ADD, fd, &ev) == -1) {
-					perror ("ERROR epoll add");
+	
+				/* add it to the worker's event handler */
+				if (events_add_event_2(&w->ev_handler, fd) == -1) {
+					error ("ERROR events_add_event_2");
 				}
 			}
 		}
