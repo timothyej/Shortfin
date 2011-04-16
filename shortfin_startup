@@ -1,16 +1,16 @@
 #! /bin/sh
 
 ### BEGIN INIT INFO
-# Provides:          ninety4
+# Provides:          shortfin
 # Required-Start:    $local_fs $remote_fs $network $syslog
 # Required-Stop:     $local_fs $remote_fs $network $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Starts the ninety4 web server
-# Description:       Start and stops the ninety4 web server. Place this file in /etc/init.d/
+# Short-Description: Starts the shortfin web server
+# Description:       Start and stops the shortfin web server. Place this file in /etc/init.d/
 ### END INIT INFO
 
-# Author: Timothy E. Johansson <timothy.johansson@workidoo.com>
+# Author: Timothy E. Johansson <timothy.ejohansson@gmail.com>
 
 # Do NOT "set -e"
 
