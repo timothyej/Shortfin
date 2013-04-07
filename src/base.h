@@ -1,15 +1,14 @@
 #ifndef _BASE_H_
 #define _BASE_H_
 
+#include <config.h>
+
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <semaphore.h>
-
-#define HAVE_SYS_EPOLL_H 1
-
 
 #ifdef HAVE_SYS_EPOLL_H
 	#include <sys/epoll.h>
@@ -20,9 +19,6 @@
 #endif
 
 #include "cache.h"
-
-/* start key to attach shared memory TODO: use pid instead */
-#define SHARED_MEM_KEY 8910
 
 
 /* connection event types */
@@ -165,8 +161,7 @@ typedef struct {
 #ifdef HAVE_SYS_EPOLL_H
 	struct epoll_event **events;
 #elif defined(HAVE_SYS_EVENT_H)
-	struct kevent *changes;
-	int nchanges;
+	struct kevent changes;
 	struct kevent *events;
 	int nevents;
 #endif
@@ -234,6 +229,7 @@ typedef struct {
 
 typedef struct {
 	int running;
+	pid_t pid;		/* Process ID */
 
 	char *config_file;	/* file path to the config file */
 	config *config;		/* holds master server settings */
@@ -278,5 +274,45 @@ typedef struct {
 	
 	event_handler ev_handler;	/* event handler - epoll, kqueue */
 } worker;
+
+#ifndef _LOCK_H_
+#include "lock.h"
+#endif
+
+#ifndef _SERVER_H_
+#include "server.h"
+#endif
+
+#ifndef _WORKER_H_
+#include "worker.h"
+#endif
+
+#ifndef _SAFE_H_
+#include "safe.h"
+#endif
+
+#ifndef _SOCKET_H_
+#include "socket.h"
+#endif
+
+#ifndef _REQUEST_H_
+#include "request.h"
+#endif
+
+#ifndef _RESPONSE_H_
+#include "response.h"
+#endif
+
+#ifndef _CONNECTION_H_
+#include "connection.h"
+#endif
+
+#ifndef _CONFIG_FILE_H_
+#include "config_file.h"
+#endif
+
+#ifndef _EVENTS_H_
+#include "events.h"
+#endif
 
 #endif

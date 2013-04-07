@@ -73,9 +73,18 @@ int request_parse(server *srv, connection *conn) {
 				break;
 			
 				case ' ':
-				/* uri starts */
-					is_uri = !is_uri;
-					is_method = 0;
+				/* uri starts or ends */
+					if (is_method) {
+						is_uri = 1;
+						is_method = 0;
+					} else {
+						is_uri = 0;
+					}
+				break;
+
+				case '?':
+				/* query string starts */
+					is_uri = 0;
 				break;
 				
 				default:
@@ -136,13 +145,13 @@ int request_parse(server *srv, connection *conn) {
 
 	/* determine method */
 	if (method_len > 0) {
-		if (strcmp(conn->request->method, "GET", 3) == 0) {
+		if (strncmp(conn->request->method, "GET", 3) == 0) {
 			req->method_type = METHOD_GET;
 		}
-		else if (strcmp(conn->request->method, "HEAD", 4) == 0) {
+		else if (strncmp(conn->request->method, "HEAD", 4) == 0) {
 			req->method_type = METHOD_HEAD;
 		}
-		else if (strcmp(conn->request->method, "POST", 4) == 0) {
+		else if (strncmp(conn->request->method, "POST", 4) == 0) {
 			req->method_type = METHOD_POST;
 		} else {
 			/* unknown method */

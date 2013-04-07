@@ -2,14 +2,12 @@ TODO - Shortfin
 --------------
 
 * Fix worker performance
-* SHARED_MEM_KEY should be pid
 * Test mmap() compared to sendfile()
 * Finish the proxy module
 * Finish error/warning/access logging
 * Port to xBSD
 * Some HTTP/1.1 functions (see below)
 * HTTP Keep-Alive (Timeout?)
-* Add some HTTP/1.1 features
 
 
 HTTP/1.1

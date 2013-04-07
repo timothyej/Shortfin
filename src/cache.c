@@ -8,9 +8,14 @@
 /* Init cache */
 int cache_init(cache* c) {
     	c->used = 0;
-    	c->max = 255;
-    	c->size = 255;
+    	c->max = 256;
+    	c->size = 256;
     	c->nodes = malloc(sizeof(cnode) * c->size);
+
+	int i;
+	for (i = 0; i < c->size; ++i) {
+		c->nodes[i] = NULL;
+	}
 
     	return 0;
 }
@@ -19,6 +24,7 @@ int cache_init(cache* c) {
 /* Init cache node */
 int cache_init_node(cnode *n, int size) {
    	n->used = 0;
+   	n->value = NULL;
     	n->nodes = malloc(sizeof(cnode) * size);
     
 	int i;
@@ -32,7 +38,7 @@ int cache_init_node(cnode *n, int size) {
 /* create new node */
 cnode *cache_create_node() {
    	cnode *newnode = calloc(1, sizeof(*newnode));
-     	cache_init_node(newnode, 255);
+     	cache_init_node(newnode, 256);
      
 	return newnode;
 }
@@ -41,7 +47,7 @@ cnode *cache_create_node() {
 /* Add a new entry to the cache */
 cnode *cache_add(cache *c, char* id, void* value) {
      	int len = strlen(id);
-	int asc = id[len-1];
+	unsigned int asc = (unsigned int) id[len-1] < 256 ? id[len-1] : 255;
 	cnode *node; /* Current node */
 
 	/* Create a new node */
@@ -55,7 +61,7 @@ cnode *cache_add(cache *c, char* id, void* value) {
 
 	int i = len-1;
 	while ((--i) > -1) {
-		asc = id[i];
+		asc = (unsigned int) id[i] < 256 ? id[i] : 255;
 	
 		/* Create a new node */
 		if (node->nodes[asc] == NULL) {
@@ -75,25 +81,25 @@ cnode *cache_add(cache *c, char* id, void* value) {
 
 /* Get cache entry */
 void* cache_get(cache *c, char* id, int len) {
-    	cnode *node = c->nodes[ id[len-1] ];
+    	cnode *node = c->nodes[ (unsigned int)id[len-1]<256?id[len-1]:255 ];
 
     	int i = len-1;
 	while ((--i) > -1) {
-        	node = node->nodes[id[i]];
+        	node = node->nodes[ (unsigned int)id[i]<256?id[i]:255 ];
     	}
 
 	return node->value;
 }
 
 void* cache_get_exists(cache *c, char* id, int len) {
-    	cnode *node = c->nodes[ id[len-1] ];
+    	cnode *node = c->nodes[ (unsigned int)id[len-1]<256?id[len-1]:255 ];
 
 	if (node == NULL)
        		return NULL;
 
     	int i = len-1;
 	while ((--i) > -1) {
-        	node = node->nodes[id[i]];
+        	node = node->nodes[ (unsigned int)id[i]<256?id[i]:255 ];
         	
         	if (node == NULL)
         	     return NULL;
@@ -103,11 +109,11 @@ void* cache_get_exists(cache *c, char* id, int len) {
 }
 
 cnode* cache_get_node(cache *c, char* id, int len) {
-    	cnode *node = c->nodes[ id[len-1] ];
+    	cnode *node = c->nodes[ (unsigned int)id[len-1]<256?id[len-1]:255 ];
 
     	int i = len-1;
 	while ((--i) > -1) {
-        	node = node->nodes[id[i]];
+        	node = node->nodes[ (unsigned int)id[i]<256?id[i]:255 ];
     	}
 
 	return node;
@@ -115,14 +121,14 @@ cnode* cache_get_node(cache *c, char* id, int len) {
 
 /* Check if cache entry exists */
 int cache_exists(cache *c, char* id, int len) {
-    	cnode *node = c->nodes[ id[len-1] ];
+    	cnode *node = c->nodes[ (unsigned int)id[len-1]<256?id[len-1]:255 ];
 
      	if (node == NULL)
         	return 1;
 
     	int i = len-1;
 	while ((--i) > -1) {
-        	node = node->nodes[id[i]];
+        	node = node->nodes[ (unsigned int)id[i]<256?id[i]:255 ];
         	
         	if (node == NULL)
         	     return 1;
@@ -133,6 +139,32 @@ int cache_exists(cache *c, char* id, int len) {
 
 /* Free cache */
 int cache_free(cache *c) {
+	int i;
+	for (i = 0; i < 256; ++i) {
+		if (c->nodes[i] != NULL) {
+			cache_free_nodes (c->nodes[i]);	
+		}
+	}
+
+	free (c->nodes);
 	free (c);
+	return 0;
+}
+
+/* Free all nodes */
+int cache_free_nodes(cnode *n) {
+	int i;
+	for (i = 0; i < 256; ++i) {
+		if (n->nodes[i] != NULL) {
+			cache_free_nodes (n->nodes[i]);	
+		}
+	}
+
+	if (n->value != NULL) {
+		free (n->value);
+	}
+
+	free (n->nodes);
+	free (n);
 	return 0;
 }

@@ -64,6 +64,8 @@ am_shortfin_OBJECTS = src/master_server.$(OBJEXT) src/server.$(OBJEXT) \
 	src/lock.$(OBJEXT) src/events.$(OBJEXT)
 shortfin_OBJECTS = $(am_shortfin_OBJECTS)
 shortfin_LDADD = $(LDADD)
+shortfin_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(shortfin_LDFLAGS) \
+	$(LDFLAGS) -o $@
 SCRIPTS = $(dist_noinst_SCRIPTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -177,6 +179,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 shortfin_SOURCES = src/master_server.c src/server.c src/safe.c src/worker.c src/socket.c src/cache.c src/request.c src/response.c src/connection.c src/status_codes.c src/mime_types.c src/config_file.c src/proxy.c src/lock.c src/events.c
+shortfin_LDFLAGS = -Wl,--no-as-needed -lpthread
 dist_noinst_SCRIPTS = autogen.sh
 all: all-am
 
@@ -304,7 +307,7 @@ src/events.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 shortfin$(EXEEXT): $(shortfin_OBJECTS) $(shortfin_DEPENDENCIES) 
 	@rm -f shortfin$(EXEEXT)
-	$(LINK) $(shortfin_OBJECTS) $(shortfin_LDADD) $(LIBS)
+	$(shortfin_LINK) $(shortfin_OBJECTS) $(shortfin_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

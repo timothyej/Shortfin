@@ -13,7 +13,6 @@ response *response_init(server *srv) {
 	resp->header_len = 0;
 	resp->data_len = 0;
 	resp->http_packet_len = 0;
-	resp->content_type = NULL;
 	resp->content_type_len = 0;
 	
 	resp->cached = 0;
@@ -32,11 +31,12 @@ int response_build(server *srv, connection *conn) {
 		/* method is GET or HEAD */
 		char *filename = conn->request->uri+1;
 		int filename_len = conn->request->uri_len-1;
-
+		
 		if ((f = cache_get_exists(srv->file_cache, filename, filename_len)) != NULL) {
 			/* found in cache */
 			resp->file = f;
-
+			printf (" * [%s] (cached)\n", filename);
+			
 			if (srv->config->cache_files == CACHE_YES && f->fd != -1) {
 				/* using a cached file */
 				resp->status = f->http_status;
@@ -52,7 +52,7 @@ int response_build(server *srv, connection *conn) {
 				
 				return 0;
 			} else {
-				/* the file needs to be read again */ 
+				/* the file needs to be read again */
 				response_read_file (srv, conn, f);
 			}
 		} 
@@ -60,6 +60,7 @@ int response_build(server *srv, connection *conn) {
 			/* not found in cache */
 			f = malloc(sizeof(file_item));
 			resp->file = f;
+			printf (" * [%s] (cached)\n", filename);
 	
 			/* filename */
 			f->filename_len = filename_len;
@@ -152,11 +153,11 @@ int response_build(server *srv, connection *conn) {
 				if ((f->fd = open(tmp_filename, 0)) == -1) {
 					perror ("ERROR could not cache the file");
 				}
-			
+				
 				f->size = resp->http_packet_len;
 				f->header_len = resp->header_len;
 				resp->cached = 1;
-			
+				
 				free (tmp_name);
 				free (tmp_filename);
 			} else {
@@ -183,16 +184,30 @@ int response_build_http_packet(server *srv, response *resp) {
 	int status_len = 0;
 	status_codes *sc = srv->status_codes;
 	
+	char *hdr1 = NULL;
+	char *hdr2 = NULL;
+	
+	int hdr1_len = 0;
+	int hdr2_len = 0;
+	
 	/* headers */
-	resp->content_type_len = strlen(resp->content_type);
-	int hdr1_len = 16+resp->content_type_len;
-	int hdr2_len = 18+12;
+	if (resp->content_type != NULL) {
+		resp->content_type_len = strlen(resp->content_type);
+		hdr1_len = 16+resp->content_type_len;
+	} else {
+		resp->content_type_len = 0;
+	}
 	
-	char *hdr1 = malloc(hdr1_len+1);
-	hdr1_len = sprintf(hdr1, "\r\nContent-Type: %s", resp->content_type);
+	if (hdr1_len > 0) {
+		hdr1 = malloc(hdr1_len+1);
+		hdr1_len = sprintf(hdr1, "\r\nContent-Type: %s", resp->content_type);
+	}
 	
-	char *hdr2 = malloc(hdr2_len+1);
-	hdr2_len = sprintf(hdr2, "\r\nContent-Length: %lu", resp->data_len);		
+	if (resp->data_len > 0) {
+		hdr2_len = 30; /* 18 + 12 */
+		hdr2 = malloc(hdr2_len+1);
+		hdr2_len = sprintf(hdr2, "\r\nContent-Length: %lu", resp->data_len);		
+	}
 
 	/* calculate len */
 	resp->http_packet_len = sc->HTTP_VER_LEN;
@@ -222,8 +237,7 @@ int response_build_http_packet(server *srv, response *resp) {
 	
 	resp->header_len = sc->HTTP_VER_LEN + status_len + hdr1_len + hdr2_len + srv->server_header_len+4;
 	
-	resp->http_packet_len += status_len;
-	resp->http_packet_len += resp->header_len + resp->data_len + 4;
+	resp->http_packet_len = resp->header_len + resp->data_len;
 	
 	/* build http packet */
 	resp->http_packet = malloc(resp->http_packet_len+1);
@@ -231,16 +245,28 @@ int response_build_http_packet(server *srv, response *resp) {
 	memcpy (resp->http_packet, sc->HTTP_VER, sc->HTTP_VER_LEN);
 	memcpy (resp->http_packet+sc->HTTP_VER_LEN, status, status_len);
 	
-	memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len, hdr1, hdr1_len);
-	memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len, hdr2, hdr2_len);
+	if (hdr1_len > 0) {
+		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len, hdr1, hdr1_len);
+	}
+	
+	if (hdr2_len > 0) {
+		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len, hdr2, hdr2_len);
+	}	
+	
 	memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len+hdr2_len, srv->server_header, srv->server_header_len);
 	
 	memcpy (resp->http_packet+resp->header_len-4, "\r\n\r\n", 4);
 	memcpy (resp->http_packet+resp->header_len, resp->data, resp->data_len);
 	memcpy (resp->http_packet+resp->header_len+resp->data_len, "\0", 1);
 	
-	free (hdr1);
-	free (hdr2);
+	/* free some memory */
+	if (hdr1 != NULL) {
+		free (hdr1);
+	}
+	
+	if (hdr2 != NULL) {
+		free (hdr2);
+	}
 	
 	if (resp->status == 200) {
 		/* only free this if it's a 200 OK */
@@ -256,7 +282,7 @@ int response_read_file(server *srv, connection *conn, file_item *f) {
 	response *resp = conn->response;
 	
 	if (f->fd == -1) {
-		/* not an cached file descriptor, open it again */
+		/* not a cached file descriptor, open it again */
 		if (f->filename_len == 0) {
 			response_get_index_file (srv, f);
 		} else if (response_file_exist(f->abs_path) == 0) {
@@ -365,14 +391,14 @@ int response_free(response *resp) {
 }
 
 char *response_char2hex(char *str) {
-	int len = strlen(str)*3;
-	char *new = malloc(len);
+	int str_len = strlen(str);
+	char *new = malloc(str_len*3+1);
 	int i;
 	
 	memcpy (new, "\0", 1);
 	
-	for (i = 0; i < strlen(str); ++i) {
-		sprintf (new, "%s%02X", new, (unsigned char*)str[i]);
+	for (i = 0; i < str_len; ++i) {
+		sprintf (new, "%s%02X", new, (unsigned char*) str[i]);
 	}
 	
 	return new;

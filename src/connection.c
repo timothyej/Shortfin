@@ -23,7 +23,7 @@ connection *connection_setup(master_server *master_srv) {
 int connection_start(master_server *master_srv, connection *conn) {
 	/* start a new connection */
 	conn->status = CONN_STARTED;
-	conn->start_ts = NULL; //time(NULL); // TODO: cache the time
+	conn->start_ts = NULL; //time(NULL); not used anyway... // TODO: cache the time
 	conn->buffer_len = 0;
 	conn->read_buffer = NULL;
 	conn->request = NULL;
@@ -32,7 +32,7 @@ int connection_start(master_server *master_srv, connection *conn) {
 	return 0;
 }
 
-int connection_handle(connection *conn) {
+int connection_handle(worker *w, connection *conn) {
 	/* handle a connection event */
 	server *srv = conn->server;
 
@@ -99,48 +99,43 @@ int connection_handle(connection *conn) {
 		response_build (srv, conn);
 
 		/* send to browser */
-		if (conn->response->http_packet_len <= srv->master->config->write_buffer_size) {
-		//if (1==1) {
-			/* small buffer, send it with one call */
-			if (conn->response->cached) {
-				/* using sendfile on a cached file */
-				off_t offset = 0;
-				if (sendfile(conn->fd, conn->response->file->fd, &offset, conn->response->http_packet_len) == -1) {
-					perror ("ERROR sendfile");
-					conn->status = CONN_ERROR;
-				}
+		if (conn->response->cached) {
+			/* using sendfile on a cached file */
+			off_t offset = 0;
+			if (sendfile(conn->fd, conn->response->file->fd, &offset, conn->response->http_packet_len) == -1) {
+				perror ("ERROR sendfile");
+				conn->status = CONN_ERROR;
 			}
-			else {
-				/* TODO: use send + sendfile */
+		} else {
+			/* TODO: use send + sendfile */
+			if (conn->response->http_packet_len <= srv->master->config->write_buffer_size) {
+				/* small buffer, send it with one call */
 				if (send(conn->fd, conn->response->http_packet, conn->response->http_packet_len, 0) == -1) {
 					perror ("ERROR writing to socket");
 					conn->status = CONN_ERROR;
 				}
-			}
-		}
-		else {
-			/* large buffer, chunk it */
-			unsigned long data_sent = 0;
-			int flag, size, sent;
-		
-			/* TODO: TCP_CORK or MSG_MORE? */
-			/* TODO: use sendfile */
-		
-			while (data_sent < conn->response->http_packet_len) {
-				if ((size = conn->response->http_packet_len - data_sent) >= srv->master->config->write_buffer_size) {
-					size = srv->master->config->write_buffer_size;
-					flag = MSG_MORE;
-				} else {
-					flag = 0;
-				}
+			} else {
+				/* large buffer, chunk it */
+				unsigned long data_sent = 0;
+				int flag, size, sent;
 				
-				if ((sent = send(conn->fd, conn->response->http_packet+data_sent, size, flag)) == -1) {
-					perror ("ERROR writing to socket");
-					conn->status = CONN_ERROR;
-					break;
-				}
+				/* TODO: TCP_CORK or MSG_MORE? */
+				while (data_sent < conn->response->http_packet_len) {
+					if ((size = conn->response->http_packet_len - data_sent) >= srv->master->config->write_buffer_size) {
+						size = srv->master->config->write_buffer_size;
+						flag = MSG_MORE;
+					} else {
+						flag = 0;
+					}
 				
-				data_sent += size;
+					if ((sent = send(conn->fd, conn->response->http_packet+data_sent, size, flag)) == -1) {
+						perror ("ERROR writing to socket");
+						conn->status = CONN_ERROR;
+						break;
+					}
+				
+					data_sent += size;
+				}
 			}
 		}
 

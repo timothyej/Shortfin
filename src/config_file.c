@@ -24,7 +24,7 @@ int config_load_default(config *conf) {
 	conf->child_stack_size = 128000;
 	
 	conf->listen_port = 80;
-	conf->server_name = "shortfin/0.9";
+	conf->server_name = "shortfin/0.9.5";
 	conf->doc_root = "/var/www/";
 	conf->index_file = "index.html";
 	conf->daemonize = 1;

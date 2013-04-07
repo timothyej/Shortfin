@@ -64,6 +64,8 @@ am_shortfin_OBJECTS = src/master_server.$(OBJEXT) src/server.$(OBJEXT) \
 	src/lock.$(OBJEXT) src/events.$(OBJEXT)
 shortfin_OBJECTS = $(am_shortfin_OBJECTS)
 shortfin_LDADD = $(LDADD)
+shortfin_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(shortfin_LDFLAGS) \
+	$(LDFLAGS) -o $@
 SCRIPTS = $(dist_noinst_SCRIPTS)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -88,11 +90,11 @@ DIST_ARCHIVES = $(distdir).tar.gz
 GZIP_ENV = --best
 distuninstallcheck_listfiles = find . -type f -print
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /home/timothy/Projects/shortfin/missing --run aclocal-1.11
-AMTAR = ${SHELL} /home/timothy/Projects/shortfin/missing --run tar
-AUTOCONF = ${SHELL} /home/timothy/Projects/shortfin/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/timothy/Projects/shortfin/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/timothy/Projects/shortfin/missing --run automake-1.11
+ACLOCAL = ${SHELL} /home/timothy/Projects/Shortfin/missing --run aclocal-1.11
+AMTAR = ${SHELL} /home/timothy/Projects/Shortfin/missing --run tar
+AUTOCONF = ${SHELL} /home/timothy/Projects/Shortfin/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/timothy/Projects/Shortfin/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/timothy/Projects/Shortfin/missing --run automake-1.11
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -117,7 +119,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = -lpthread 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/timothy/Projects/shortfin/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/timothy/Projects/Shortfin/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 OBJEXT = o
 PACKAGE = shortfin
@@ -132,10 +134,10 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = 
 VERSION = 1.0
-abs_builddir = /home/timothy/Projects/shortfin
-abs_srcdir = /home/timothy/Projects/shortfin
-abs_top_builddir = /home/timothy/Projects/shortfin
-abs_top_srcdir = /home/timothy/Projects/shortfin
+abs_builddir = /home/timothy/Projects/Shortfin
+abs_srcdir = /home/timothy/Projects/Shortfin
+abs_top_builddir = /home/timothy/Projects/Shortfin
+abs_top_srcdir = /home/timothy/Projects/Shortfin
 ac_ct_CC = gcc
 am__include = include
 am__leading_dot = .
@@ -154,7 +156,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/timothy/Projects/shortfin/install-sh
+install_sh = ${SHELL} /home/timothy/Projects/Shortfin/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -177,6 +179,7 @@ top_srcdir = .
 AUTOMAKE_OPTIONS = subdir-objects
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS}
 shortfin_SOURCES = src/master_server.c src/server.c src/safe.c src/worker.c src/socket.c src/cache.c src/request.c src/response.c src/connection.c src/status_codes.c src/mime_types.c src/config_file.c src/proxy.c src/lock.c src/events.c
+shortfin_LDFLAGS = -Wl,--no-as-needed -lpthread
 dist_noinst_SCRIPTS = autogen.sh
 all: all-am
 
@@ -304,7 +307,7 @@ src/events.$(OBJEXT): src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 shortfin$(EXEEXT): $(shortfin_OBJECTS) $(shortfin_DEPENDENCIES) 
 	@rm -f shortfin$(EXEEXT)
-	$(LINK) $(shortfin_OBJECTS) $(shortfin_LDADD) $(LIBS)
+	$(shortfin_LINK) $(shortfin_OBJECTS) $(shortfin_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

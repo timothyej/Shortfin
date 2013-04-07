@@ -30,5 +30,6 @@ void* cache_get_exists(cache*, char*, int);
 cnode* cache_get_node(cache*, char*, int);
 int cache_exists(cache*, char*, int);
 int cache_free(cache*);
+int cache_free_nodes(cnode *n);
 
 #endif

@@ -21,15 +21,12 @@ event_handler *events_create(int max_clients) {
 #elif defined(HAVE_SYS_EVENT_H)
 	/* kqueue */
 	evhand->events = malloc(max_clients * sizeof(struct kevent*));
-	evhand->changes = malloc(max_clients * sizeof(struct kevent*));
 	
 	for (i = 0; i < max_clients; ++i) {
 		evhand->events[i] = malloc(sizeof(struct kevent));
-		evhand->changes[i] = malloc(sizeof(struct kevent));
 	}
 	
 	evhand->nevents = 0;
-	evhand->nchanges = 0;
 	
 	if ((evhand->fd = kqueue()) == -1) {
 		perror ("ERROR kqueue");
@@ -55,8 +52,8 @@ int events_add_event(event_handler *evhand, int fd) {
 	}
 #elif defined(HAVE_SYS_EVENT_H)
 	/* kqueue */
-	EV_SET (evhand->changes[evhand->nchanges], fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
-	evhand->nchanges++;
+	EV_SET (&evhand->changes, fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
+	kevent (evhand->fd, &evhand->changes, 1, (void *)0, 0, (struct timespec*)0);
 #endif
 
 	return 0;
@@ -78,8 +75,8 @@ int events_add_event_2(event_handler *evhand, int fd) {
 
 #elif defined(HAVE_SYS_EVENT_H)
 	/* kqueue */
-	EV_SET (evhand->changes[evhand->nchanges], fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
-	evhand->nchanges++;
+	EV_SET (&evhand->changes, fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, 0);
+	kevent (evhand->fd, &evhand->changes, 1, (void *)0, 0, (struct timespec*)0);
 #endif
 
 	return 0;
@@ -116,7 +113,7 @@ int events_wait(event_handler *evhand, master_server *master_srv) {
 	
 #elif defined(HAVE_SYS_EVENT_H)
 	/* kqueue */
-	if ((nfds = kevent(evhand->fd, evhand->changes, evhand->nchanges evhand->events, master_srv->config->max_clients, NULL) == -1) {
+	if ((nfds = kevent(evhand->fd, (void *)0, 0, evhand->events, master_srv->config->max_clients, NULL) == -1) {
 		perror ("ERROR kevent");
 		return -1;
 	}
@@ -135,7 +132,8 @@ int events_closed(event_handler *evhand, int num) {
 
 #elif defined(HAVE_SYS_EVENT_H)
 	/* kqueue */
-	/* .. */
+	struct kevent *events = evhand->events;
+	return events[num]->flags & EV_EOF
 #endif
 }
 
@@ -150,7 +148,7 @@ int events_get_fd(event_handler *evhand, int num) {
 #elif defined(HAVE_SYS_EVENT_H)
 	/* kqueue */
 	struct kevent *events = evhand->events;
-	return events[i].data;
+	return events[i].ident;
 #endif
 }
 
@@ -168,7 +166,6 @@ int events_free(event_handler *evhand, int max_clients) {
 	/* kqueue */
 	for (i = 0; i < max_clients; ++i) {
 		free (evhand->events[i]);
-		free (evhand->changes[i]);
 	}
 #endif
 

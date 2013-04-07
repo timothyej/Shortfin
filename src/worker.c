@@ -3,7 +3,7 @@
 worker *worker_init(master_server *master_srv, int num) {
 	/* init a new worker */
 	int shmid;
-	key_t key = SHARED_MEM_KEY+num;
+	key_t key = master_srv->pid + num;
 	worker *w = NULL;
 
 	/* create a shared memory */
@@ -17,6 +17,9 @@ worker *worker_init(master_server *master_srv, int num) {
 		perror ("ERROR shmat");
 		return NULL;
 	}
+	
+	w->num = num;
+	w->master_srv = master_srv;
 	
 	return w;
 }
@@ -36,15 +39,12 @@ int worker_spawn(int number, master_server *master_srv) {
 	void **child_stack = malloc(master_srv->config->child_stack_size);
 	worker *w = master_srv->workers[number];
 
-	w->num = number;
-	w->master_srv = master_srv;
-	
 	/* TODO: use rfork() on FreeBSD & OpenBSD */ 
 	if (clone(worker_server, child_stack+sizeof(child_stack) / sizeof(*child_stack), CLONE_FS | CLONE_FILES, w) == -1) {
 		perror ("ERROR clone()");
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -59,7 +59,7 @@ static int worker_server(worker *info) {
 
 	/* attach the shared mem */	
 	int shmid;
-	key_t key = SHARED_MEM_KEY+num;
+	key_t key = master_srv->pid + num;
 
 	if ((shmid = shmget(key, sizeof(worker), 0666)) < 0) {
 		perror ("ERROR shmget");
@@ -76,7 +76,7 @@ static int worker_server(worker *info) {
 	w->pid = getpid();
 	
 	/* worker process started */
-	printf ("Worker process #%d started.\n", num+1);
+	printf (" * Worker process #%d is started.\n", num+1);
 	
 	/* pre-setup worker connections */
 	conns = connection_setup(master_srv);
@@ -99,6 +99,8 @@ static int worker_server(worker *info) {
 			fd = events_get_fd(ev_handler, i);
 			connection *conn = conns[fd];
 			
+			printf (" * fd:%d Receiving data...\n", fd);
+			
 			if (events_closed(ev_handler, i)) {
 				/* the other end closed the connection */
 				conn->status = CONN_INACTIVE;
@@ -108,7 +110,7 @@ static int worker_server(worker *info) {
 				connection_start (master_srv, conn);
 			}
 			
-			connection_handle (conn);
+			connection_handle (w, conn);
 			
 			/* closing */
 			if (conn->status == CONN_INACTIVE) {
@@ -121,13 +123,12 @@ static int worker_server(worker *info) {
 		}
 	}
 	
-	printf ("Shutting down process #%d...\n", num+1);
+	printf (" * Shutting down worker process #%d...\n", num+1);
 	
 	/* free event handler */
 	events_free (ev_handler, master_srv->config->max_clients);
 
 	/* TODO: free all connections */
-	/* ... */
 	free (conns);
 
 	/* free this workers memory */

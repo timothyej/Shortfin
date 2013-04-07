@@ -8,17 +8,6 @@
 #include <sys/mman.h>
 
 #include "base.h"
-#include "lock.h"
-#include "server.h"
-#include "safe.h"
-#include "socket.h"
-#include "cache.h"
-#include "request.h"
-#include "response.h"
-#include "connection.h"
-#include "config_file.h"
-#include "events.h"
-
 
 master_server *master_serv; /* used by signal handler */
 
@@ -59,10 +48,13 @@ int master_server_init(master_server *master_srv) {
 	/* init locks */
 	lock_init (&master_srv->lock_log);
 	
+	/* process id */
+	master_srv->pid = getpid();
+	
 	/* allocate worker pointers */
 	master_srv->workers = malloc(master_srv->config->max_workers * sizeof(worker*));
 	
-	for (i = 0; i < master_srv->config->max_workers; ++i) {	
+	for (i = 0; i < master_srv->config->max_workers; ++i) {
 		if ((master_srv->workers[i] = worker_init(master_srv, i)) == NULL) {
 			perror ("ERROR creating a new worker");
 			return -1;
@@ -121,7 +113,6 @@ int master_server_free(master_server *master_srv) {
 	return 0;
 }
 
-
 int main(int argc, char *argv[]) {
 	int nfds, fd, i, c;
 	
@@ -160,7 +151,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* load master server settings from file */
-	printf ("Loading configuration file '%s'...\n", master_srv->config_file);
+	printf (" * Loading configuration file '%s'...\n", master_srv->config_file);
 	master_srv->config = config_init();
 	
 	if (config_load(master_srv->config_file, master_srv->config) == -1) {
@@ -177,7 +168,7 @@ int main(int argc, char *argv[]) {
 
 	/* daemonize? */
 	if (master_srv->config->daemonize) {
-		printf ("Daemonizing...\n");
+		printf (" * Daemonizing...\n");
 		daemonize();
 	}
 
@@ -202,9 +193,9 @@ int main(int argc, char *argv[]) {
 	event_handler *ev_handler = events_create(master_srv->config->max_clients);
 	
 	/* loading virtual servers from config */
-	printf ("Loading virtual servers...\n");
+	printf (" * Loading virtual servers...\n");
 	config_load_servers (master_srv->config_file, master_srv);
-	printf ("%d virtual server(s) where found.\n", master_srv->server_count);
+	printf ("    - %d virtual server(s) where found.\n", master_srv->server_count);
 	
 	for (i = 0; i < master_srv->server_count; ++i) {
 		server *srv = master_srv->servers[i];
@@ -221,7 +212,7 @@ int main(int argc, char *argv[]) {
 		/* by port */
 		if (cache_exists(master_srv->servers_by_port, port, port_len) != 0) {
 			/* this is the first, add it and start listen on that port */
-			printf ("Start listen on port %s\n", port);
+			printf (" * Listening on port %s.\n", port);
 			
 			if (socket_listen(srv) == -1) {
 				perror ("ERROR socket_listen");
@@ -285,7 +276,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	usleep (500000);
-	printf ("The server is up and running!\n");
+	
+	printf (" * The server is up and running!\n");
 
 	/* the server is up and running, entering the main loop... */
 	while (master_srv->running) {
@@ -300,12 +292,12 @@ int main(int argc, char *argv[]) {
 
 			/* get the server that is listening on this fd */
 			server *srv = master_srv->servers_by_fd[fd];
+			printf (" * fd:%d New connection on server '%s'.\n", fd, srv->config->hostname);
 			
 			/* accept the connection */
 			if ((fd = socket_accept(srv->server_socket)) == -1) {
 				perror ("ERROR on accept");
-			}
-			else {
+			} else {
 				/* get the worker for this fd */
 				worker *w = master_srv->worker_map[fd];
 				
@@ -333,7 +325,7 @@ int main(int argc, char *argv[]) {
 	master_server_free (master_srv);
 	free (master_srv->config_file);
 	
-	printf ("The server is down, exiting...\n");
+	printf (" * The server is down, exiting...\n");
 	
 	return 0; 
 }

@@ -1,9 +1,9 @@
 Shortfin Web Server
 ------------------
- by Timothy E. Johansson, 2011
+ by Timothy E. Johansson, 2011-2013
 
 Description:
-  Shortfin is a fast and lightweight static web server.
+  Shortfin is a fast and lightweight static web server made to run web apps.
 
 
 Tested on:
@@ -11,8 +11,8 @@ Tested on:
   
   
 Install
-	# ./configure
- 	# make
+	$ ./configure
+ 	$ make
  	# make install
 
 
