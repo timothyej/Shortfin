@@ -11,7 +11,7 @@ dist_noinst_SCRIPTS = autogen.sh
 
 install-data-local:
 	mkdir -p /etc/shortfin
-	cp config/shortfin.conf /etc/shortfin/shortfin.conf
+	test -f "/etc/shortfin/shortfin.conf" || cp config/shortfin.conf /etc/shortfin/shortfin.conf
 	
 	cp shortfin_startup /etc/init.d/shortfind
 	chmod +x /etc/init.d/shortfind
