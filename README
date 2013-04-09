@@ -1,6 +1,9 @@
 Shortfin Web Server
 ------------------
- by Timothy E. Johansson, 2011-2013
+http://shortfin.io
+
+Timothy E. Johansson <timothy.ejohansson@gmail.com>
+
 
 Description:
   Shortfin is a fast and lightweight static web server made to run web apps.
@@ -15,6 +18,10 @@ Install
  	$ make
  	# make install
 
+
+Configure:
+	# vim /etc/shortfin/shortfin.conf
+	
 
 How to start the server
 	# shortfin -c /etc/shortfin/shortfin.conf
