@@ -13,9 +13,9 @@ install-data-local:
 	mkdir -p /etc/shortfin
 	cp config/shortfin.conf /etc/shortfin/shortfin.conf
 	
-	cp shortfin_startup /etc/init.d/shortfin
-	chmod +x /etc/init.d/shortfin
-	update-rc.d shortfin defaults 98 02
+	cp shortfin_startup /etc/init.d/shortfind
+	chmod +x /etc/init.d/shortfind
+	update-rc.d shortfind defaults 98 02
 	
 	mkdir -p /var/logs/shortfin
 	
