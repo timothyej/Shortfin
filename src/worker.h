@@ -3,6 +3,7 @@
 
 #include <sys/epoll.h>
 #include <sched.h>
+#include <linux/sched.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>

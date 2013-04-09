@@ -41,7 +41,7 @@ src/lock.o: src/lock.c src/lock.h /usr/include/semaphore.h \
  /usr/include/x86_64-linux-gnu/bits/stdio2.h \
  /usr/include/x86_64-linux-gnu/sys/epoll.h src/cache.h src/server.h \
  src/worker.h /usr/include/sched.h \
- /usr/include/x86_64-linux-gnu/bits/sched.h \
+ /usr/include/x86_64-linux-gnu/bits/sched.h /usr/include/linux/sched.h \
  /usr/include/x86_64-linux-gnu/sys/ipc.h \
  /usr/include/x86_64-linux-gnu/bits/ipctypes.h \
  /usr/include/x86_64-linux-gnu/bits/ipc.h \
@@ -177,6 +177,8 @@ src/worker.h:
 /usr/include/sched.h:
 
 /usr/include/x86_64-linux-gnu/bits/sched.h:
+
+/usr/include/linux/sched.h:
 
 /usr/include/x86_64-linux-gnu/sys/ipc.h:
 
