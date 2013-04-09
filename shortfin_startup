@@ -20,7 +20,7 @@ DESC=shortfin
 NAME=shortfin
 DAEMON=/usr/local/bin/$NAME
 DAEMON_ARGS="-c /etc/shortfin/shortfin.conf -d"
-SCRIPTNAME=/etc/init.d/$NAME-server
+SCRIPTNAME=/etc/init.d/shortfind
 PIDFILE=/var/run/$NAME.pid
 
 # Exit if the package is not installed
