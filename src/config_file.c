@@ -37,6 +37,7 @@ int config_load_default(config *conf) {
 	conf->cache_dir = "/var/www/cache/";
 	
 	conf->keep_alive = 1;
+	conf->keep_alive_timeout = 5;
 	
 	conf->read_buffer_size = 4046;
 	conf->write_buffer_size = 131072;
@@ -439,6 +440,9 @@ int config_save_value(char *key, char *value, config *conf, char *scope) {
 	}
 	else if (strcmp(key, "keep-alive") == 0) {
 		conf->keep_alive = atoi(value);
+	}
+	else if (strcmp(key, "keep-alive-timeout") == 0) {
+		conf->keep_alive_timeout = atoi(value);
 	}
 	else if (strcmp(key, "default") == 0) {
 		conf->default_server = atoi(value);

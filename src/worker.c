@@ -171,7 +171,7 @@ void *keep_alive_cleanup(worker *w) {
 		}
 		
 		/* sleep before next cycle */
-		sleep (5);
+		sleep (master_srv->config->keep_alive_timeout);
 	}
 	
 	/* we will probably never get here... */

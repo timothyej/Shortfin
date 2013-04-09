@@ -1,14 +1,15 @@
 TODO - Shortfin
---------------
+---------------
 
-* Fix worker performance
+* Fix multiple worker performance
 * Test mmap() compared to sendfile()
 * Finish the proxy module
 * Finish error/warning/access logging
 * Port to xBSD
 * Some HTTP/1.1 functions (see below)
-* HTTP Keep-Alive (Timeout?)
-
+* Cache timestamps
+* Implement a reload functionality
+* Implement a monitor for child processes (if they craches)
 
 HTTP/1.1
 --------

@@ -217,6 +217,7 @@ typedef struct {
 
 	char *chroot;
 	int keep_alive;
+	int keep_alive_timeout;
 	
 	int default_server;
 	char *hostname;

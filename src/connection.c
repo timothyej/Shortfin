@@ -25,7 +25,7 @@ int connection_start(master_server *master_srv, connection *conn) {
 	/* start a new connection */
 	conn->status = CONN_STARTED;
 	conn->start_ts = NULL; //time(NULL); not used anyway... // TODO: cache the time
-	conn->last_event = time(NULL); // TODO: cache the time
+	conn->last_event = 0;
 	conn->buffer_len = 0;
 	conn->read_buffer = NULL;
 	conn->request = NULL;
@@ -39,7 +39,7 @@ int connection_handle(worker *w, connection *conn) {
 	server *srv = conn->server;
 
 	/* update ts */
-	conn->last_event = time(NULL);	
+	conn->last_event = time(NULL);	// TODO: cache the time
 	
 	if (conn->status == CONN_STARTED) {
 		conn->status = CONN_READING;
