@@ -35,7 +35,7 @@ int response_build(server *srv, connection *conn) {
 		if ((f = cache_get_exists(srv->file_cache, filename, filename_len)) != NULL) {
 			/* found in cache */
 			resp->file = f;
-			printf (" * [%s] (cached)\n", filename);
+			printf (" * %s %s/%s (cached)\n", conn->request->method, ((server*)conn->server)->config->hostname, filename);
 			
 			if (srv->config->cache_files == CACHE_YES && f->fd != -1) {
 				/* using a cached file */
@@ -55,13 +55,12 @@ int response_build(server *srv, connection *conn) {
 				/* the file needs to be read again */
 				response_read_file (srv, conn, f);
 			}
-		} 
-		else {
+		} else {
 			/* not found in cache */
 			f = malloc(sizeof(file_item));
 			resp->file = f;
-			printf (" * [%s] (cached)\n", filename);
-	
+			printf (" * %s %s/%s\n", conn->request->method, ((server*)conn->server)->config->hostname, filename);
+			
 			/* filename */
 			f->filename_len = filename_len;
 			f->filename = malloc(filename_len+1);
@@ -87,7 +86,7 @@ int response_build(server *srv, connection *conn) {
 			/* add to cache */
 			cache_add (srv->file_cache, filename, f);
 		}		
-
+		
 		/* file is loaded */
 		if (resp->data_len < 1) {
 			/* 404 Not Found */
@@ -96,8 +95,7 @@ int response_build(server *srv, connection *conn) {
 			/* 200 OK */
 			resp->status = 200;
 		}
-	}
-	else {
+	} else {
 		/* the method is not GET or HEAD */
 		resp->status = 400;
 	}

@@ -15,6 +15,7 @@ connection *connection_setup(master_server *master_srv) {
 		conns[i]->status = CONN_INACTIVE;
 		conns[i]->fd = i;
 		conns[i]->server = master_srv->servers[master_srv->server_default];
+		conns[i]->last_event = 0;
 	}
 	
 	return conns;
@@ -24,6 +25,7 @@ int connection_start(master_server *master_srv, connection *conn) {
 	/* start a new connection */
 	conn->status = CONN_STARTED;
 	conn->start_ts = NULL; //time(NULL); not used anyway... // TODO: cache the time
+	conn->last_event = time(NULL); // TODO: cache the time
 	conn->buffer_len = 0;
 	conn->read_buffer = NULL;
 	conn->request = NULL;
@@ -36,6 +38,9 @@ int connection_handle(worker *w, connection *conn) {
 	/* handle a connection event */
 	server *srv = conn->server;
 
+	/* update ts */
+	conn->last_event = time(NULL);	
+	
 	if (conn->status == CONN_STARTED) {
 		conn->status = CONN_READING;
 	}
@@ -66,7 +71,7 @@ int connection_handle(worker *w, connection *conn) {
 		if (conn->buffer_len > 4) {
 			if (conn->read_buffer[conn->buffer_len-4] == '\r' && conn->read_buffer[conn->buffer_len-3] == '\n' &&
 			    conn->read_buffer[conn->buffer_len-2] == '\r' && conn->read_buffer[conn->buffer_len-1] == '\n') {
-				/* parse and build an 'request' object */
+				/* parse and build a request object */
 				request_parse (srv, conn);
 				
 				/* if host is known, switch server */
@@ -139,8 +144,13 @@ int connection_handle(worker *w, connection *conn) {
 			}
 		}
 
-		/* closing connection */
-		conn->status = CONN_CLOSED;
+		/* keep-alive? */
+		if (conn->request->keep_alive && srv->config->keep_alive) {
+			conn->status = CONN_INACTIVE;
+		} else {
+			/* closing connection */
+			conn->status = CONN_CLOSED;
+		}
 	}
 	
 	if (conn->status == CONN_CLOSED) {
@@ -164,8 +174,7 @@ int connection_handle(worker *w, connection *conn) {
 				srv->config->cache_files = CACHE_NONE;
 				safe_warn (srv, "cache is turned off: upper limit reached.");
 			}
-		}
-		else if (srv->config->cache_files == CACHE_FD) {
+		} else if (srv->config->cache_files == CACHE_FD) {
 			/* check if the max number of open fds is reached */
 			if (srv->cache_open_fds >= srv->config->cache_max_fds) {
 				srv->config->cache_files = CACHE_NONE;
@@ -179,12 +188,20 @@ int connection_handle(worker *w, connection *conn) {
 
 int connection_reset(master_server *master_srv, connection *conn) {
 	/* reset a connection */
-	conn->start_ts = NULL;
+	conn->start_ts = 0;
 	conn->buffer_len = 0;
 	conn->server = master_srv->servers[master_srv->server_default];
 	
-	/* TODO: if keep-alive == true set c->status = CONN_READING */
-	conn->status = CONN_INACTIVE;
+	if (conn->status != CONN_CLOSED) {
+		conn->status = CONN_INACTIVE;
+		
+		/* keep-alive? */
+		if (((server*)conn->server)->config->keep_alive) {
+			if (conn->request != NULL && conn->request->keep_alive) {
+				conn->status = CONN_READING;
+			}
+		}
+	}
 
 	if (conn->read_buffer != NULL) {
 		free (conn->read_buffer);
@@ -206,7 +223,8 @@ int connection_reset(master_server *master_srv, connection *conn) {
 
 int connection_free(master_server *master_srv, connection *conn) {
 	/* when the server shuts down, all connections need to be freed */
-	conn->start_ts = NULL;
+	conn->start_ts = 0;
+	conn->last_event = 0;
 	conn->buffer_len = 0;
 	conn->status = CONN_INACTIVE;
 

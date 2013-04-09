@@ -121,6 +121,8 @@ typedef struct {
 	
 	char *host;
 	int host_len;
+	
+	int keep_alive;
 } request;
 
 typedef struct {
@@ -144,13 +146,14 @@ typedef struct {
 	int fd; 		/* socket */
 	int port;		/* connected on this port */
 	void *server;		/* which server this connection is assigned to */
-
+	
 	request *request;
 	response *response;
 	
 	time_t start_ts; 	/* when the connection was initialized */
+	time_t last_event;	/* when the last event took place */
 	
-	int status;		 /* connection status */
+	int status;		/* connection status */
 	
 	char *read_buffer;
 	long buffer_len;
@@ -213,6 +216,7 @@ typedef struct {
 	unsigned long cache_turn_off_limit;
 
 	char *chroot;
+	int keep_alive;
 	
 	int default_server;
 	char *hostname;
@@ -271,6 +275,7 @@ typedef struct {
 	int num; 			/* which process number */
 	master_server *master_srv;	/* master server (configs and servers), not shared */
 	pid_t pid;			/* Process ID */
+	connection **conns; 		/* connections */
 	
 	event_handler ev_handler;	/* event handler - epoll, kqueue */
 } worker;

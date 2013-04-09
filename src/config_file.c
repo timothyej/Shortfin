@@ -36,6 +36,8 @@ int config_load_default(config *conf) {
 	conf->cache_turn_off_limit = 295000000;
 	conf->cache_dir = "/var/www/cache/";
 	
+	conf->keep_alive = 1;
+	
 	conf->read_buffer_size = 4046;
 	conf->write_buffer_size = 131072;
 	
@@ -435,12 +437,15 @@ int config_save_value(char *key, char *value, config *conf, char *scope) {
 		memcpy (conf->error_log_path, value, strlen(value)+1);
 		conf->error_log = 1;
 	}
+	else if (strcmp(key, "keep-alive") == 0) {
+		conf->keep_alive = atoi(value);
+	}
 	else if (strcmp(key, "default") == 0) {
 		conf->default_server = atoi(value);
 	}
 	else {
 		/* key not found */
-		printf ("Config key '%s' is uknown.\n", key);
+		printf (" * Config key '%s' is uknown.\n", key);
 	}
 	
 	return 0;

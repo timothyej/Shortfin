@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
 		if ((nfds = events_wait(ev_handler, master_srv)) == -1) {
 			perror ("ERROR epoll_pwait");
 		}
-
+		
 		for (i = 0; i < nfds; ++i) {
 			/* new connection */
 			fd = events_get_fd(ev_handler, i);

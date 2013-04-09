@@ -1,5 +1,14 @@
 #include "request.h"
 
+char *strtolower(char *str) {
+	if (str == NULL) return str;
+	int i;
+	for (i = 0; str[i]; ++i) {
+		str[i] = tolower(str[i]);
+	}
+	return str;
+}
+
 request *request_init(server *srv) {
 	/* init a new request struct */
 	int i;
@@ -21,6 +30,8 @@ request *request_init(server *srv) {
 	
 	req->host = NULL;
 	req->host_len = 0;
+	
+	req->keep_alive = 1;
 	
 	return req;
 }
@@ -96,8 +107,7 @@ int request_parse(server *srv, connection *conn) {
 						++method_len;
 					}
 			}
-		}
-		else {
+		} else {
 		/* in headers */
 			if (cur == ':' && is_key) {
 				is_key = 0;
@@ -107,10 +117,17 @@ int request_parse(server *srv, connection *conn) {
 				if (header_count < 50) {
 					headers[header_count]->value[cur_len] = '\0';
 					
-					/* if host ... */
 					if (strncmp(headers[header_count]->key, "Host", 4) == 0) {
+					/* if host */
 						req->host = headers[header_count]->value;
 						req->host_len = cur_len;
+					} else if (strncmp(headers[header_count]->key, "Connection", 10) == 0) {
+					/* keep-alive? */
+						char *connection = strtolower(headers[header_count]->value);
+						if (strncmp(connection, "keep-alive", 10) != 0) {
+							/* this request is not keep-alive */
+							req->keep_alive = 0;
+						}
 					}
 				}
 				
@@ -147,11 +164,9 @@ int request_parse(server *srv, connection *conn) {
 	if (method_len > 0) {
 		if (strncmp(conn->request->method, "GET", 3) == 0) {
 			req->method_type = METHOD_GET;
-		}
-		else if (strncmp(conn->request->method, "HEAD", 4) == 0) {
+		} else if (strncmp(conn->request->method, "HEAD", 4) == 0) {
 			req->method_type = METHOD_HEAD;
-		}
-		else if (strncmp(conn->request->method, "POST", 4) == 0) {
+		} else if (strncmp(conn->request->method, "POST", 4) == 0) {
 			req->method_type = METHOD_POST;
 		} else {
 			/* unknown method */
