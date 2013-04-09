@@ -36,7 +36,7 @@ static void daemonize() {
 	}
 	
 	/* close standard file descriptors */
-	close (STDIN_FILENO);
+	//close (STDIN_FILENO);
         close (STDOUT_FILENO);
         close (STDERR_FILENO);
 }
@@ -115,6 +115,7 @@ int master_server_free(master_server *master_srv) {
 
 int main(int argc, char *argv[]) {
 	int nfds, fd, i, c;
+	int arg_daemonize = 0;
 	
 	/* lock all memory in physical RAM */
 	if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
@@ -123,7 +124,7 @@ int main(int argc, char *argv[]) {
 	
 	/* create a new master server */
 	master_server *master_srv = malloc(sizeof(master_server));
-
+	
 	/* setup signal handlers */
 	signal (SIGHUP, signal_handler);
 	signal (SIGTERM, signal_handler);
@@ -133,11 +134,16 @@ int main(int argc, char *argv[]) {
 	signal (SIGCHLD, signal_handler); /* child exited */
 	
 	/* parse command args (to get to config path) */
-	while ((c = getopt (argc, argv, "abc:")) != -1) {
+	while ((c = getopt(argc, argv, "c:d")) != -1) {
 		switch (c) {
 			case 'c':
 				master_srv->config_file = malloc(strlen(optarg)+1);
 				memcpy (master_srv->config_file, optarg, strlen(optarg)+1);
+			break;
+			
+			case 'd': 
+				/* daemonize */
+				arg_daemonize = 1;
 			break;
 			
 			case '?':
@@ -167,7 +173,7 @@ int main(int argc, char *argv[]) {
 	master_srv->running = 1;
 
 	/* daemonize? */
-	if (master_srv->config->daemonize) {
+	if (master_srv->config->daemonize || arg_daemonize) {
 		printf (" * Daemonizing...\n");
 		daemonize();
 	}
