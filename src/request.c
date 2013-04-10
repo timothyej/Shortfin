@@ -102,6 +102,13 @@ int request_parse(server *srv, connection *conn) {
 					if (is_uri && uri_len < 1023) {
 						uri[uri_len] = cur;
 						++uri_len;
+						
+						/* check for directory traversal */
+						if (uri_len > 1) {
+							if (uri[uri_len-1] == '.' && uri[uri_len-2] == '.') {
+								uri_len -= 1;
+							}
+						}
 					} else if (is_method && method_len < 8) {
 						method[method_len] = cur;
 						++method_len;

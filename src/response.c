@@ -74,7 +74,7 @@ int response_build(server *srv, connection *conn) {
 			memcpy (f->abs_path, srv->config->doc_root, doc_root_len);
 			memcpy (f->abs_path+doc_root_len, filename, filename_len);
 			memcpy (f->abs_path+doc_root_len+filename_len, "\0", 1);
-	
+			
 			/* fd and size */
 			f->fd = -1;
 			f->size = 0;
