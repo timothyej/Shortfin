@@ -61,20 +61,24 @@ typedef struct {
 	char *HTTP_400;
 	char *HTTP_404;
 	char *HTTP_500;
-
+	char *HTTP_501;
+	
 	int   HTTP_200_LEN;
 	int   HTTP_302_LEN;
 	int   HTTP_400_LEN;
 	int   HTTP_404_LEN;
 	int   HTTP_500_LEN;
+	int   HTTP_501_LEN;
 	
 	char *HTTP_400_CONTENT;
 	char *HTTP_404_CONTENT;
 	char *HTTP_500_CONTENT;
+	char *HTTP_501_CONTENT;
 	
 	int   HTTP_400_CONTENT_LEN;
 	int   HTTP_404_CONTENT_LEN;
 	int   HTTP_500_CONTENT_LEN;
+	int   HTTP_501_CONTENT_LEN;
 } status_codes;
 
 typedef struct stringpair {

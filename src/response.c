@@ -24,7 +24,7 @@ int response_build(server *srv, connection *conn) {
 	/* build the response */
 	conn->response = response_init(srv);
 	response *resp = conn->response;
-	file_item *f;
+	file_item *f = NULL;
 	
 	/* check method */
 	if (conn->request->method_type == METHOD_GET || conn->request->method_type == METHOD_HEAD) {
@@ -97,7 +97,7 @@ int response_build(server *srv, connection *conn) {
 		}
 	} else {
 		/* the method is not GET or HEAD */
-		resp->status = 400;
+		resp->status = 501;
 	}
 
 	/* build response */
@@ -115,6 +115,11 @@ int response_build(server *srv, connection *conn) {
 			resp->data_len = srv->status_codes->HTTP_404_CONTENT_LEN;
 			resp->content_type = mime_types_get(".html", 5, srv->mime_types);
 		break;
+		case 501:
+			resp->data = srv->status_codes->HTTP_501_CONTENT;
+			resp->data_len = srv->status_codes->HTTP_501_CONTENT_LEN;
+			resp->content_type = mime_types_get(".html", 5, srv->mime_types);
+		break;
 		case 500:
 		default:
 			resp->data = srv->status_codes->HTTP_500_CONTENT;
@@ -128,7 +133,7 @@ int response_build(server *srv, connection *conn) {
 	
 	/* cache the response */
 	if (srv->config->cache_files == CACHE_YES) {
-		if (resp->status == 200 || srv->config->cache_other) {
+		if ((resp->status == 200 || srv->config->cache_other) && resp->status != 501) {
 			/* first, check if there is space in the cache memory */
 			if (srv->cache_used_mem + resp->http_packet_len <= srv->config->cache_memory_size) {
 				/* if the file not already exist, save it */
@@ -171,8 +176,10 @@ int response_build(server *srv, connection *conn) {
 		resp->http_packet_len = resp->header_len;
 	}
 
-	f->http_status = resp->status;
-	
+	if (f != NULL) {
+		f->http_status = resp->status;
+	}
+
 	return 0;
 }
 
@@ -224,6 +231,11 @@ int response_build_http_packet(server *srv, response *resp) {
 		case 404:
 			status = sc->HTTP_404;
 			status_len = sc->HTTP_404_LEN;
+		break;
+		
+		case 501:
+			status = sc->HTTP_501;
+			status_len = sc->HTTP_501_LEN;
 		break;
 		
 		case 500:

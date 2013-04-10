@@ -74,23 +74,25 @@ int connection_handle(worker *w, connection *conn) {
 				/* parse and build a request object */
 				request_parse (srv, conn);
 				
-				/* if host is known, switch server */
-				if (conn->request->host_len > 0) {
-					if ((conn->server = cache_get_exists(srv->master->servers_by_host, conn->request->host, conn->request->host_len)) == NULL) {
-						/* didn't found the requested host */
-						conn->server = srv;
-					}
-					#if 0
-					else {
-						server *tmp = conn->server;
-						if (conn->port != tmp->config->listen_port) {
-							/* the requested host is on another port, drop connection */
-							conn->status = CONN_ERROR;
+				if (conn->request->method_type != METHOD_UNKNOWN) {
+					/* if host is known, switch server */
+					if (conn->request->host_len > 0) {
+						if ((conn->server = cache_get_exists(srv->master->servers_by_host, conn->request->host, conn->request->host_len)) == NULL) {
+							/* didn't found the requested host */
+							conn->server = srv;
 						}
+						#if 0
+						else {
+							server *tmp = conn->server;
+							if (conn->port != tmp->config->listen_port) {
+								/* the requested host is on another port, drop connection */
+								conn->status = CONN_ERROR;
+							}
+						}
+						#endif
+						srv = conn->server;
 					}
-					#endif
-					srv = conn->server;
-				}
+				}	
 				
 				if (conn->status != CONN_ERROR) {
 					conn->status = CONN_WRITING;
@@ -102,7 +104,7 @@ int connection_handle(worker *w, connection *conn) {
 	if (conn->status == CONN_WRITING) {	
 		/* build the response data */
 		response_build (srv, conn);
-
+		
 		/* send to browser */
 		if (conn->response->cached) {
 			/* using sendfile on a cached file */

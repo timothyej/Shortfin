@@ -7,6 +7,7 @@ TODO - Shortfin
 * Finish error/warning/access logging
 * Port to xBSD
 * Some HTTP/1.1 functions (see below)
+* Improve the error response handling
 * Cache timestamps
 * Implement a reload functionality
 * Implement a monitor for child processes (if they craches)
@@ -20,6 +21,6 @@ HTTP/1.1
 * [ ] Sends 400 for broken Request-Line
 * [ ] Sends 411 for missing Content-Length on POST requests
 * [ ] Sends 416 for "out-of-range" on Range: Header
-* [ ] Sends 501 for request-method != (GET|POST|HEAD)
+* [x] Sends 501 for request-method != (GET|POST|HEAD)
 * [ ] Sends 505 for protocol != HTTP/1.0 or HTTP/1.1
 * [ ] Sends Date: on every requests
