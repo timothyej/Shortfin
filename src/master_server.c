@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "config.h"
 
@@ -20,6 +22,29 @@ static void signal_handler(int sig) {
 		/* shutdown the whole server */
 		master_serv->running = 0;
 	}
+}
+
+void *heartbeat_monitor(master_server *master_srv) {
+	/* heartbeat monitor */
+	int i, c;
+	time_t ts = 0;
+	
+	while (1) {
+		ts = time(NULL);
+	
+		for (i = 0; i < master_srv->config->max_workers; ++i) {
+			worker *w = master_srv->workers[i];
+			if (ts - w->heartbeat > 4) {
+				printf ("WARNING worker #%d (pid %d) is dead! Respawning...\n", i, w->pid);
+				
+				close (w->ev_handler.fd);
+				worker_spawn (i, master_srv);
+			}
+		}
+		
+		sleep (3);
+	}
+	pthread_exit (NULL);
 }
 
 static void daemonize() {
@@ -280,11 +305,15 @@ int main(int argc, char *argv[]) {
 		worker_spawn (i, master_srv);
 		usleep (1);
 	}
-
 	usleep (500000);
 	
+	/* starting heartbeat checking thread */
+	printf (" * Starting heartbeat monitor thread.\n");
+	pthread_t thread_heartbeat;
+	int rc_heartbeat = pthread_create(&thread_heartbeat, NULL, heartbeat_monitor, master_srv);
+	
 	printf (" * The server is up and running!\n");
-
+	
 	/* the server is up and running, entering the main loop... */
 	while (master_srv->running) {
 		/* wait for a new connection */
@@ -320,7 +349,7 @@ int main(int argc, char *argv[]) {
 	
 	/* wait for all child processes to exit */
 	for (i = 0; i < master_srv->config->max_workers; ++i) {
-		worker *w = master_srv->workers[i];	
+		worker *w = master_srv->workers[i];
 		waitpid (w->pid, NULL, 0);
 	}
 	

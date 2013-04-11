@@ -89,7 +89,12 @@ static int worker_server(worker *info) {
 	/* starting keep-alive clean-up thread */
 	printf (" * Starting keep-alive clean-up thread for worker #%d.\n", num+1);
 	pthread_t thread_keep_alive;
-	int rc_cleanup = pthread_create(&thread_keep_alive, NULL, keep_alive_cleanup, w);
+	int rc_cleanup = pthread_create(&thread_keep_alive, NULL, worker_keep_alive_cleanup, w);
+	
+	/* starting heartbeat thread */
+	printf (" * Starting heartbeat thread for worker #%d.\n", num+1);
+	pthread_t thread_heartbeat;
+	int rc_heartbeat = pthread_create(&thread_heartbeat, NULL, worker_heartbeat, w);
 	
 	/* entering main loop... */
 	while (master_srv->running) {
@@ -138,7 +143,7 @@ static int worker_server(worker *info) {
 	exit (0);
 }
 
-void *keep_alive_cleanup(worker *w) {
+void *worker_keep_alive_cleanup(worker *w) {
 	/* garbage collector for keep-alive connections */
 	int i;
 	master_server *master_srv = w->master_srv;
@@ -175,5 +180,14 @@ void *keep_alive_cleanup(worker *w) {
 	}
 	
 	/* we will probably never get here... */
+	pthread_exit (NULL);
+}
+
+void *worker_heartbeat(worker *w) {
+	/* worker heartbeat */
+	while (1) {
+		w->heartbeat = time(NULL);
+		sleep (3);
+	}
 	pthread_exit (NULL);
 }

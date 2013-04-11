@@ -281,6 +281,7 @@ typedef struct {
 	master_server *master_srv;	/* master server (configs and servers), not shared */
 	pid_t pid;			/* Process ID */
 	connection **conns; 		/* connections */
+	time_t heartbeat;		/* update this every 5 seconds */
 	
 	event_handler ev_handler;	/* event handler - epoll, kqueue */
 } worker;

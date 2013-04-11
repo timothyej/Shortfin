@@ -35,7 +35,10 @@ src/master_server.o: src/master_server.c /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/sigcontext.h \
  /usr/include/x86_64-linux-gnu/bits/sigstack.h \
  /usr/include/x86_64-linux-gnu/sys/ucontext.h \
- /usr/include/x86_64-linux-gnu/bits/sigthread.h src/config.h \
+ /usr/include/x86_64-linux-gnu/bits/sigthread.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h \
+ /usr/include/x86_64-linux-gnu/sys/resource.h \
+ /usr/include/x86_64-linux-gnu/bits/resource.h src/config.h \
  /usr/include/x86_64-linux-gnu/sys/mman.h \
  /usr/include/x86_64-linux-gnu/bits/mman.h src/base.h src/config.h \
  /usr/include/x86_64-linux-gnu/sys/socket.h \
@@ -166,6 +169,12 @@ src/master_server.o: src/master_server.c /usr/include/stdio.h \
 /usr/include/x86_64-linux-gnu/sys/ucontext.h:
 
 /usr/include/x86_64-linux-gnu/bits/sigthread.h:
+
+/usr/include/x86_64-linux-gnu/sys/wait.h:
+
+/usr/include/x86_64-linux-gnu/sys/resource.h:
+
+/usr/include/x86_64-linux-gnu/bits/resource.h:
 
 src/config.h:
 
