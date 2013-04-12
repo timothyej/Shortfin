@@ -200,6 +200,8 @@ typedef struct {
 	
 	int child_stack_size;
 	
+	int heartbeat_interval;
+	
 	int read_buffer_size;
 	int write_buffer_size;
 	

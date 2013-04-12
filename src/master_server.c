@@ -34,7 +34,7 @@ void *heartbeat_monitor(master_server *master_srv) {
 	
 		for (i = 0; i < master_srv->config->max_workers; ++i) {
 			worker *w = master_srv->workers[i];
-			if (ts - w->heartbeat > 4) {
+			if (ts - w->heartbeat > master_srv->config->heartbeat_interval*2) {
 				printf ("WARNING worker #%d (pid %d) is dead! Respawning...\n", i, w->pid);
 				
 				close (w->ev_handler.fd);
@@ -42,7 +42,7 @@ void *heartbeat_monitor(master_server *master_srv) {
 			}
 		}
 		
-		sleep (3);
+		sleep (master_srv->config->heartbeat_interval);
 	}
 	pthread_exit (NULL);
 }

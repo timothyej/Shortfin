@@ -187,7 +187,7 @@ void *worker_heartbeat(worker *w) {
 	/* worker heartbeat */
 	while (1) {
 		w->heartbeat = time(NULL);
-		sleep (3);
+		sleep (w->master_srv->config->heartbeat_interval);
 	}
 	pthread_exit (NULL);
 }

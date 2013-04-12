@@ -17,6 +17,7 @@ int config_load_default(config *conf) {
 	/* default configuration */
 	
 	conf->max_workers = 1;
+	conf->heartbeat_interval = 3;
 	
 	conf->max_pending = 128000;
 	conf->max_clients = 128000;
@@ -443,6 +444,9 @@ int config_save_value(char *key, char *value, config *conf, char *scope) {
 	}
 	else if (strcmp(key, "keep-alive-timeout") == 0) {
 		conf->keep_alive_timeout = atoi(value);
+	}
+	else if (strcmp(key, "heartbeat-interval") == 0) {
+		conf->heartbeat_interval = atoi(value);
 	}
 	else if (strcmp(key, "default") == 0) {
 		conf->default_server = atoi(value);
