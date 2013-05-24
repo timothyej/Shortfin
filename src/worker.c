@@ -34,6 +34,7 @@ int worker_free(worker *w) {
 	return 0;
 }
 
+#if 0
 int worker_spawn(int number, master_server *master_srv) {
 	/* spawn a new worker process */
 	void **child_stack = malloc(master_srv->config->child_stack_size);
@@ -41,6 +42,31 @@ int worker_spawn(int number, master_server *master_srv) {
 
 	/* TODO: use rfork() on FreeBSD & OpenBSD */ 
 	if (clone(worker_server, child_stack+sizeof(child_stack) / sizeof(*child_stack), CLONE_FS | CLONE_FILES, w) == -1) {
+		perror ("ERROR clone()");
+		return -1;
+	}
+
+	return 0;
+}
+#endif
+
+int worker_spawn(int number, master_server *master_srv) {
+	/* spawn a new worker process */
+	worker *w = master_srv->workers[number];
+	long stack_size = master_srv->config->child_stack_size;
+	
+	/* allocate new stack for the child process */
+	void **child_stack = (void**)malloc(stack_size);
+	if (!child_stack) {
+		return -1;
+	}
+
+	/* set up the stack for the child function, put the (worker*) on the stack */
+	child_stack = (void**)(stack_size + (char*)child_stack);
+	*--child_stack = (void*)w;
+	
+	/* TODO: use rfork() on FreeBSD & OpenBSD */ 
+	if (clone(worker_server, child_stack, CLONE_FS | CLONE_FILES, w) == -1) {
 		perror ("ERROR clone()");
 		return -1;
 	}
@@ -158,7 +184,7 @@ void *worker_keep_alive_cleanup(worker *w) {
 			conn = w->conns[i];
 			
 			if (conn->status != CONN_INACTIVE) {
-				if (ts - conn->last_event >= 5) {
+				if (ts - conn->last_event >= master_srv->config->keep_alive_timeout) {
 					printf (" * fd:%d Keep-alive connection timed out.\n", conn->fd);
 					
 					/* reset connection */

@@ -9,8 +9,9 @@ TODO - Shortfin
 * Some HTTP/1.1 functions (see below)
 * Improve the error response handling
 * Cache timestamps
-* Implement a reload functionality
-* Implement a monitor for child processes (if they craches)
+* Implement a config reload functionality
+* Close on Connection: close
+* Kill a worker when it seems to be dead
 
 HTTP/1.1
 --------

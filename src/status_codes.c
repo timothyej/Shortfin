@@ -69,10 +69,12 @@ int status_codes_free(status_codes *sc) {
 	free (sc->HTTP_400);
 	free (sc->HTTP_404);
 	free (sc->HTTP_500);
+	free (sc->HTTP_501);
 	
 	free (sc->HTTP_400_CONTENT);
 	free (sc->HTTP_404_CONTENT);
 	free (sc->HTTP_500_CONTENT);
+	free (sc->HTTP_501_CONTENT);
 	
 	free (sc);
 	
