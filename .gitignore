@@ -1,0 +1,16 @@
+*.o
+shortfin
+*~
+
+.deps/
+Makefile
+Makefile.in
+/aclocal.m4
+/autom4te.cache
+/compile
+/configure
+/config.*
+/depcomp
+/install-sh
+/missing
+/stamp-h1
