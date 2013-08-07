@@ -9,10 +9,9 @@ shortfin_LDFLAGS = -Wl,--no-as-needed -lpthread
 
 dist_noinst_SCRIPTS = autogen.sh
 
+dist_sysconf_DATA = config/shortfin.conf
+
 install-data-local:
-	mkdir -p /etc/shortfin
-	test -f "/etc/shortfin/shortfin.conf" || cp config/shortfin.conf /etc/shortfin/shortfin.conf
-	
 	cp shortfin_startup /etc/init.d/shortfind
 	chmod +x /etc/init.d/shortfind
 	update-rc.d shortfind defaults 98 02
