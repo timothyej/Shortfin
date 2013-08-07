@@ -12,7 +12,6 @@ dist_noinst_SCRIPTS = autogen.sh
 dist_sysconf_DATA = config/shortfin.conf
 
 install-data-local:
-	mkdir -p /var/logs/shortfin
-	
-	mkdir -p /var/www
-	mkdir -p /var/www/cache
+	$(MKDIR_P) $(DESTDIR)$(localstatedir)/logs/shortfin
+	$(MKDIR_P) $(DESTDIR)$(localstatedir)/www
+	$(MKDIR_P) $(DESTDIR)$(localstatedir)/www/cache

@@ -10,6 +10,7 @@ AC_CONFIG_HEADERS([src/config.h])
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_INSTALL
+AC_PROG_MKDIR_P
 
 # Checks for libraries
 AC_CHECK_LIB(pthread, sem_init)
