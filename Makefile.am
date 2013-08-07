@@ -12,10 +12,6 @@ dist_noinst_SCRIPTS = autogen.sh
 dist_sysconf_DATA = config/shortfin.conf
 
 install-data-local:
-	cp shortfin_startup /etc/init.d/shortfind
-	chmod +x /etc/init.d/shortfind
-	update-rc.d shortfind defaults 98 02
-	
 	mkdir -p /var/logs/shortfin
 	
 	mkdir -p /var/www
