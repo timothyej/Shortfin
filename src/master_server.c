@@ -162,8 +162,7 @@ int main(int argc, char *argv[]) {
 	while ((c = getopt(argc, argv, "c:d")) != -1) {
 		switch (c) {
 			case 'c':
-				master_srv->config_file = malloc(strlen(optarg)+1);
-				memcpy (master_srv->config_file, optarg, strlen(optarg)+1);
+				master_srv->config_file = strdup(optarg);
 			break;
 			
 			case 'd': 

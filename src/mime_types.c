@@ -63,8 +63,7 @@ cache *mime_types_init() {
 }
 
 int mime_types_add(char *ext, char *mime, cache *c) {
-	char *value = malloc(strlen(mime)+1);
-	memcpy (value, mime, strlen(mime)+1);
+	char *value = strdup(mime);
 
 	cache_add (c, ext, value);
 	

@@ -61,8 +61,7 @@ int proxy_add_rule(proxy *p, char *value) {
 					}
 				} else {
 					/* value */
-					p->rules[p->rule_count]->value = malloc(strlen(arg)+1);
-					memcpy (p->rules[p->rule_count]->value, arg, strlen(arg)+1);
+					p->rules[p->rule_count]->value = strdup(arg);
 					break;
 				}
 				
