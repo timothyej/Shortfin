@@ -4,6 +4,11 @@
 #include <assert.h>
 #include "cache.h"
 
+struct cache_node {
+    void *value;
+    struct cache_node **nodes;
+    int used;
+};
 
 /* Init cache */
 int cache_init(cache* c) {
