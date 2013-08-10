@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <semaphore.h>
+#include <unistd.h>
 
 #ifdef HAVE_SYS_EPOLL_H
 	#include <sys/epoll.h>
