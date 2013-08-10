@@ -1,5 +1,12 @@
 #include "mime_types.h"
 
+int mime_types_add(char *ext, char *mime, cache *c) {
+	char *value = strdup(mime);
+
+	cache_add (c, ext, value);
+	return 0;
+}
+
 /* load all mime types */
 cache *mime_types_init() {
 	cache *c = calloc(1, sizeof(*c));
@@ -60,14 +67,6 @@ cache *mime_types_init() {
 	mime_types_add (".default", "application/octet-stream", c); /* default */
 	
 	return c;
-}
-
-int mime_types_add(char *ext, char *mime, cache *c) {
-	char *value = strdup(mime);
-
-	cache_add (c, ext, value);
-	
-	return 0;
 }
 
 char *mime_types_get(char *ext, int len, cache *c) {
