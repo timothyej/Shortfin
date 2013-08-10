@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -24,10 +25,11 @@ static void signal_handler(int sig) {
 	}
 }
 
-void *heartbeat_monitor(master_server *master_srv) {
+void *heartbeat_monitor(void *p) {
 	/* heartbeat monitor */
 	int i;
 	time_t ts = 0;
+	master_server *master_srv = p;
 	
 	while (1) {
 		ts = time(NULL);
