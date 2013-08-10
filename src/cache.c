@@ -22,7 +22,7 @@ int cache_init(cache* c) {
 
 
 /* Init cache node */
-int cache_init_node(cnode *n, int size) {
+static int cache_init_node(cnode *n, int size) {
    	n->used = 0;
    	n->value = NULL;
     	n->nodes = malloc(sizeof(cnode) * size);

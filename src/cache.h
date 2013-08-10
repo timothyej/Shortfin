@@ -22,7 +22,6 @@ typedef struct {
 
 
 int cache_init(cache*);
-int cache_init_node(struct cache_node*, int);
 cnode *cache_create_node();
 cnode *cache_add(cache*, char*, void*);
 void* cache_get(cache*, char*, int);
