@@ -1,6 +1,6 @@
 #include "worker.h"
 
-static int worker_server(worker *w);
+static int worker_server(void *p);
 
 worker *worker_init(master_server *master_srv, int num) {
 	/* init a new worker */
@@ -76,8 +76,9 @@ int worker_spawn(int number, master_server *master_srv) {
 	return 0;
 }
 
-static int worker_server(worker *info) {
+static int worker_server(void *p) {
 	/* server worker */
+	worker *info = p;
 	int nfds, fd, i;
 	worker *w;
 

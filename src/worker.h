@@ -1,6 +1,7 @@
 #ifndef _WORKER_H_
 #define _WORKER_H_
 
+#define _GNU_SOURCE
 #include <sys/epoll.h>
 #include <sched.h>
 #include <linux/sched.h>
