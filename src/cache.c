@@ -36,7 +36,7 @@ static int cache_init_node(cnode *n, int size) {
 }
 
 /* create new node */
-cnode *cache_create_node() {
+static cnode *cache_create_node() {
    	cnode *newnode = calloc(1, sizeof(*newnode));
      	cache_init_node(newnode, 256);
      
