@@ -108,17 +108,6 @@ void* cache_get_exists(cache *c, char* id, int len) {
 	return node->value;
 }
 
-cnode* cache_get_node(cache *c, char* id, int len) {
-    	cnode *node = c->nodes[ (unsigned int)id[len-1]<256?id[len-1]:255 ];
-
-    	int i = len-1;
-	while ((--i) > -1) {
-        	node = node->nodes[ (unsigned int)id[i]<256?id[i]:255 ];
-    	}
-
-	return node;
-}
-
 /* Check if cache entry exists */
 int cache_exists(cache *c, char* id, int len) {
     	cnode *node = c->nodes[ (unsigned int)id[len-1]<256?id[len-1]:255 ];
