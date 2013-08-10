@@ -37,7 +37,7 @@ int response_build(server *srv, connection *conn) {
 			resp->file = f;
 			printf (" * %s %s/%s (cached)\n", conn->request->method, ((server*)conn->server)->config->hostname, filename);
 			
-			if (srv->config->cache_files == CACHE_YES && f->fd != -1) {
+			if (srv->config->cache_files == CACHE_YES && f->fd != NULL) {
 				/* using a cached file */
 				resp->status = f->http_status;
 				resp->cached = 1;
@@ -76,7 +76,7 @@ int response_build(server *srv, connection *conn) {
 			memcpy (f->abs_path+doc_root_len+filename_len, "\0", 1);
 			
 			/* fd and size */
-			f->fd = -1;
+			f->fd = NULL;
 			f->size = 0;
 			f->header_len = 0;
 	
@@ -153,7 +153,7 @@ int response_build(server *srv, connection *conn) {
 				}
 				
 				/* open the file again */
-				if ((f->fd = open(tmp_filename, 0)) == -1) {
+				if ((f->fd = fopen(tmp_filename, "rb")) == NULL) {
 					perror ("ERROR could not cache the file");
 				}
 				
@@ -291,7 +291,7 @@ int response_build_http_packet(server *srv, response *resp) {
 int response_read_file(server *srv, connection *conn, file_item *f) {
 	response *resp = conn->response;
 	
-	if (f->fd == -1) {
+	if (f->fd == NULL) {
 		/* not a cached file descriptor, open it again */
 		if (f->filename_len == 0) {
 			response_get_index_file (srv, f);
@@ -300,8 +300,7 @@ int response_read_file(server *srv, connection *conn, file_item *f) {
 		}
 		
 		if (!(f->fd = fopen(f->abs_path, "rb"))) {
-			f->fd = -1;
-			return NULL;
+			return errno;
 		}
 
 		/* get file size */
@@ -316,16 +315,16 @@ int response_read_file(server *srv, connection *conn, file_item *f) {
 	
 	if (f->size < 1) {
 		fclose (f->fd);
-		f->fd = -1;
-		return NULL;
+		f->fd = NULL;
+		return -EINVAL;
 	}
 	
 	/* allocate memory */
 	if (!(resp->data = malloc(f->size+1))) {
 		fclose (f->fd);
-		f->fd = -1;
+		f->fd = NULL;
 		safe_warn (srv, "could not allocate memory for file.");
-		return NULL;
+		return -ENOMEM;
 	}
 
 	/* read file contents into buffer */
@@ -337,7 +336,7 @@ int response_read_file(server *srv, connection *conn, file_item *f) {
 	/* dont't cache file descriptors, close it */
 	if (srv->config->cache_files != CACHE_FD) {
 		fclose (f->fd);
-		f->fd = -1;
+		f->fd = NULL;
 	}
 
 	return 0;

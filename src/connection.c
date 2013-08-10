@@ -109,7 +109,7 @@ int connection_handle(worker *w, connection *conn) {
 		if (conn->response->cached) {
 			/* using sendfile on a cached file */
 			off_t offset = 0;
-			if (sendfile(conn->fd, conn->response->file->fd, &offset, conn->response->http_packet_len) == -1) {
+			if (sendfile(conn->fd, fileno(conn->response->file->fd), &offset, conn->response->http_packet_len) == -1) {
 				perror ("ERROR sendfile");
 				conn->status = CONN_ERROR;
 			}
