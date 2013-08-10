@@ -126,22 +126,8 @@ int cache_exists(cache *c, char* id, int len) {
 	return 0;
 }
 
-/* Free cache */
-int cache_free(cache *c) {
-	int i;
-	for (i = 0; i < 256; ++i) {
-		if (c->nodes[i] != NULL) {
-			cache_free_nodes (c->nodes[i]);	
-		}
-	}
-
-	free (c->nodes);
-	free (c);
-	return 0;
-}
-
 /* Free all nodes */
-int cache_free_nodes(cnode *n) {
+static int cache_free_nodes(cnode *n) {
 	int i;
 	for (i = 0; i < 256; ++i) {
 		if (n->nodes[i] != NULL) {
@@ -155,5 +141,19 @@ int cache_free_nodes(cnode *n) {
 
 	free (n->nodes);
 	free (n);
+	return 0;
+}
+
+/* Free cache */
+int cache_free(cache *c) {
+	int i;
+	for (i = 0; i < 256; ++i) {
+		if (c->nodes[i] != NULL) {
+			cache_free_nodes (c->nodes[i]);	
+		}
+	}
+
+	free (c->nodes);
+	free (c);
 	return 0;
 }
