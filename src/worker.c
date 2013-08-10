@@ -1,5 +1,7 @@
 #include "worker.h"
 
+static int worker_server(worker *w);
+
 worker *worker_init(master_server *master_srv, int num) {
 	/* init a new worker */
 	int shmid;
