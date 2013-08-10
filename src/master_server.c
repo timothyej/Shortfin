@@ -26,7 +26,7 @@ static void signal_handler(int sig) {
 
 void *heartbeat_monitor(master_server *master_srv) {
 	/* heartbeat monitor */
-	int i, c;
+	int i;
 	time_t ts = 0;
 	
 	while (1) {
@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
 			
 					/* also by hostname:port */
 					char *host_port = malloc(strlen(tmp_hostname)+8);
-					int host_port_len = sprintf(host_port, "%s:%d", tmp_hostname, srv->config->listen_port);
+					sprintf(host_port, "%s:%d", tmp_hostname, srv->config->listen_port);
 			
 					cache_add (master_srv->servers_by_host, host_port, srv);
 			
@@ -309,7 +309,7 @@ int main(int argc, char *argv[]) {
 	/* starting heartbeat checking thread */
 	printf (" * Starting heartbeat monitor thread.\n");
 	pthread_t thread_heartbeat;
-	int rc_heartbeat = pthread_create(&thread_heartbeat, NULL, heartbeat_monitor, master_srv);
+	pthread_create(&thread_heartbeat, NULL, heartbeat_monitor, master_srv);
 	
 	printf (" * The server is up and running!\n");
 	

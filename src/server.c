@@ -1,8 +1,6 @@
 #include "server.h"
 
 int server_init(server *srv) {
-	int i, e;
-	
 	/* build server header */
 	char *tmp = "\r\nServer: ";
 	srv->server_header_len = strlen(tmp)+strlen(srv->config->server_name);
@@ -32,7 +30,6 @@ int server_init(server *srv) {
 
 int server_free(server *srv) {
 	/* free everything allocated in server_init */
-	int i;
 	
 	/* free server socket */
 	socket_free (srv->server_socket);
