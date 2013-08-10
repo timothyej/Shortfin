@@ -1,6 +1,8 @@
 #include "worker.h"
 
 static int worker_server(void *p);
+static void *worker_keep_alive_cleanup(void *p);
+static void *worker_heartbeat(void *p);
 
 worker *worker_init(master_server *master_srv, int num) {
 	/* init a new worker */
@@ -172,9 +174,10 @@ static int worker_server(void *p) {
 	exit (0);
 }
 
-void *worker_keep_alive_cleanup(worker *w) {
+static void *worker_keep_alive_cleanup(void *p) {
 	/* garbage collector for keep-alive connections */
 	int i;
+	worker *w = p;
 	master_server *master_srv = w->master_srv;
 	time_t ts;
 	connection *conn;
@@ -212,8 +215,10 @@ void *worker_keep_alive_cleanup(worker *w) {
 	pthread_exit (NULL);
 }
 
-void *worker_heartbeat(worker *w) {
+static void *worker_heartbeat(void *p) {
 	/* worker heartbeat */
+	worker *w = p;
+
 	while (1) {
 		w->heartbeat = time(NULL);
 		sleep (w->master_srv->config->heartbeat_interval);
