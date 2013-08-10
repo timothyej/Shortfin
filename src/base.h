@@ -167,7 +167,7 @@ typedef struct {
 typedef struct {
 	int fd;
 #ifdef HAVE_SYS_EPOLL_H
-	struct epoll_event **events;
+	struct epoll_event *events;
 #elif defined(HAVE_SYS_EVENT_H)
 	struct kevent changes;
 	struct kevent *events;
