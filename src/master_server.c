@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
 		
 			/* add it to the event handler */
 			if (events_add_event(ev_handler, srv->server_socket->fd) == -1) {
-				error ("ERROR events_add_event");
+				perror ("ERROR events_add_event");
 				exit (1);
 			}
 
@@ -342,7 +342,7 @@ int main(int argc, char *argv[]) {
 	
 				/* add it to the worker's event handler */
 				if (events_add_event_2(&w->ev_handler, fd) == -1) {
-					error ("ERROR events_add_event_2");
+					perror ("ERROR events_add_event_2");
 				}
 			}
 		}
