@@ -3,7 +3,6 @@
 
 #include "base.h"
 
-connection *connection_init();
 connection **connection_setup(master_server *master_srv);
 int connection_start(master_server *master_srv, connection *conn);
 int connection_handle(worker *w, connection *conn);
