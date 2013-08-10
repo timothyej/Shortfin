@@ -29,7 +29,7 @@ int socket_listen(server *srv) {
 	}
 	
 	/* set socket options */
-	if (socket_listen_setup(srv, s->fd) == -1) {
+	if (socket_listen_setup(srv->master, s->fd) == -1) {
 		return -1;
 	}
 	
