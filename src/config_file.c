@@ -50,6 +50,126 @@ config *config_init() {
 	return conf;
 }
 
+static int config_save_value(char *key, char *value, config *conf, char *scope) {
+	/* save config value */
+
+	if (scope != NULL) {
+		/* proxy settings */
+		if (strcmp(scope, "proxy") == 0) {
+			if (strcmp(key, "port") == 0) {
+				conf->proxies[conf->proxy_count-1]->port = atoi(value);
+			}
+			else if (strcmp(key, "host") == 0) {
+				conf->proxies[conf->proxy_count-1]->host = strdup(value);
+			}
+			else if (strcmp(key, "cache") == 0) {
+				conf->proxies[conf->proxy_count-1]->cache = atoi(value);
+			}
+			else if (strcmp(key, "new-rule") == 0) {
+				/* add a new rule */
+				proxy_add_rule (conf->proxies[conf->proxy_count-1], value);
+			}
+
+			return 0;
+		}
+	}
+
+	if (strcmp(key, "listen-port") == 0) {
+		conf->listen_port = atoi(value);
+	}
+	else if (strcmp(key, "max-workers") == 0) {
+		conf->max_workers = atoi(value);
+	}
+	else if (strcmp(key, "child-stack-size") == 0) {
+		conf->child_stack_size = atoi(value);
+	}
+	else if (strcmp(key, "max-pending") == 0) {
+		conf->max_pending = atoi(value);
+	}
+	else if (strcmp(key, "max-clients") == 0) {
+		conf->max_clients = atoi(value);
+	}
+	else if (strcmp(key, "server-name") == 0) {
+		conf->server_name = strdup(value);
+	}
+	else if (strcmp(key, "doc-root") == 0) {
+		conf->doc_root = strdup(value);
+	}
+	else if (strcmp(key, "index-file") == 0) {
+		conf->index_file = strdup(value);
+	}
+	else if (strcmp(key, "daemonize") == 0) {
+		conf->daemonize = atoi(value);
+	}
+	else if (strcmp(key, "cache-files") == 0) {
+		if (strcmp(value, "yes") == 0) {
+			conf->cache_files = CACHE_YES;
+		}
+		else if (strcmp(value, "no") == 0) {
+			conf->cache_files = CACHE_NONE;
+		}
+		else if (strcmp(value, "fd") == 0) {
+			conf->cache_files = CACHE_FD;
+		}
+	}
+	else if (strcmp(key, "cache-other") == 0) {
+		conf->cache_other = atoi(value);
+	}
+	else if (strcmp(key, "cache-max-fds") == 0) {
+		conf->cache_max_fds = atoi(value);
+	}
+	else if (strcmp(key, "cache-memory-size") == 0) {
+		conf->cache_memory_size = atol(value);
+	}
+	else if (strcmp(key, "cache-turn-off-limit") == 0) {
+		conf->cache_turn_off_limit = atol(value);
+	}
+	else if (strcmp(key, "cache-dir") == 0) {
+		conf->cache_dir = strdup(value);
+	}
+	else if (strcmp(key, "read-buffer-size") == 0) {
+		conf->read_buffer_size = atoi(value);
+	}
+	else if (strcmp(key, "write-buffer-size") == 0) {
+		conf->write_buffer_size = atoi(value);
+	}
+	else if (strcmp(key, "tcp-nodelay") == 0) {
+		conf->tcp_nodelay = atoi(value);
+	}
+	else if (strcmp(key, "chroot") == 0) {
+		conf->chroot = strdup(value);
+	}
+	else if (strcmp(key, "hostname") == 0) {
+		conf->hostname = strdup(value);
+	}
+	else if (strcmp(key, "access-log") == 0) {
+		conf->access_log_path = strdup(value);
+		conf->access_log = 1;
+	}
+	else if (strcmp(key, "error-log") == 0) {
+		conf->error_log_path = strdup(value);
+		conf->error_log = 1;
+	}
+	else if (strcmp(key, "keep-alive") == 0) {
+		conf->keep_alive = atoi(value);
+	}
+	else if (strcmp(key, "keep-alive-timeout") == 0) {
+		conf->keep_alive_timeout = atoi(value);
+	}
+	else if (strcmp(key, "heartbeat-interval") == 0) {
+		conf->heartbeat_interval = atoi(value);
+	}
+	else if (strcmp(key, "default") == 0) {
+		conf->default_server = atoi(value);
+	}
+	else {
+		/* key not found */
+		printf (" * Config key '%s' is uknown.\n", key);
+	}
+
+	return 0;
+}
+
 int config_copy(config *dest, config *source) {
 	/* copy a config to another */
 	
@@ -321,124 +441,3 @@ int config_load_servers(char *filename, master_server *master_srv) {
 
 	return 0;
 }
-
-int config_save_value(char *key, char *value, config *conf, char *scope) {
-	/* save config value */
-	
-	if (scope != NULL) {
-		/* proxy settings */
-		if (strcmp(scope, "proxy") == 0) {
-			if (strcmp(key, "port") == 0) {
-				conf->proxies[conf->proxy_count-1]->port = atoi(value);
-			}
-			else if (strcmp(key, "host") == 0) {
-				conf->proxies[conf->proxy_count-1]->host = strdup(value);
-			}
-			else if (strcmp(key, "cache") == 0) {
-				conf->proxies[conf->proxy_count-1]->cache = atoi(value);
-			}
-			else if (strcmp(key, "new-rule") == 0) {
-				/* add a new rule */
-				proxy_add_rule (conf->proxies[conf->proxy_count-1], value);
-			}
-		
-			return 0;
-		}
-	}
-	
-	if (strcmp(key, "listen-port") == 0) {
-		conf->listen_port = atoi(value);
-	}
-	else if (strcmp(key, "max-workers") == 0) {
-		conf->max_workers = atoi(value);
-	}
-	else if (strcmp(key, "child-stack-size") == 0) {
-		conf->child_stack_size = atoi(value);
-	}
-	else if (strcmp(key, "max-pending") == 0) {
-		conf->max_pending = atoi(value);
-	}
-	else if (strcmp(key, "max-clients") == 0) {
-		conf->max_clients = atoi(value);
-	}
-	else if (strcmp(key, "server-name") == 0) {
-		conf->server_name = strdup(value);
-	}
-	else if (strcmp(key, "doc-root") == 0) {
-		conf->doc_root = strdup(value);
-	}
-	else if (strcmp(key, "index-file") == 0) {
-		conf->index_file = strdup(value);
-	}
-	else if (strcmp(key, "daemonize") == 0) {
-		conf->daemonize = atoi(value);
-	}
-	else if (strcmp(key, "cache-files") == 0) {
-		if (strcmp(value, "yes") == 0) {
-			conf->cache_files = CACHE_YES;
-		}
-		else if (strcmp(value, "no") == 0) {
-			conf->cache_files = CACHE_NONE;
-		}
-		else if (strcmp(value, "fd") == 0) {
-			conf->cache_files = CACHE_FD;
-		}
-	}
-	else if (strcmp(key, "cache-other") == 0) {
-		conf->cache_other = atoi(value);
-	}
-	else if (strcmp(key, "cache-max-fds") == 0) {
-		conf->cache_max_fds = atoi(value);
-	}
-	else if (strcmp(key, "cache-memory-size") == 0) {
-		conf->cache_memory_size = atol(value);
-	}
-	else if (strcmp(key, "cache-turn-off-limit") == 0) {
-		conf->cache_turn_off_limit = atol(value);
-	}
-	else if (strcmp(key, "cache-dir") == 0) {
-		conf->cache_dir = strdup(value);
-	}
-	else if (strcmp(key, "read-buffer-size") == 0) {
-		conf->read_buffer_size = atoi(value);
-	}
-	else if (strcmp(key, "write-buffer-size") == 0) {
-		conf->write_buffer_size = atoi(value);
-	}
-	else if (strcmp(key, "tcp-nodelay") == 0) {
-		conf->tcp_nodelay = atoi(value);
-	}
-	else if (strcmp(key, "chroot") == 0) {
-		conf->chroot = strdup(value);
-	}
-	else if (strcmp(key, "hostname") == 0) {
-		conf->hostname = strdup(value);
-	}
-	else if (strcmp(key, "access-log") == 0) {
-		conf->access_log_path = strdup(value);
-		conf->access_log = 1;
-	}
-	else if (strcmp(key, "error-log") == 0) {
-		conf->error_log_path = strdup(value);
-		conf->error_log = 1;
-	}
-	else if (strcmp(key, "keep-alive") == 0) {
-		conf->keep_alive = atoi(value);
-	}
-	else if (strcmp(key, "keep-alive-timeout") == 0) {
-		conf->keep_alive_timeout = atoi(value);
-	}
-	else if (strcmp(key, "heartbeat-interval") == 0) {
-		conf->heartbeat_interval = atoi(value);
-	}
-	else if (strcmp(key, "default") == 0) {
-		conf->default_server = atoi(value);
-	}
-	else {
-		/* key not found */
-		printf (" * Config key '%s' is uknown.\n", key);
-	}
-	
-	return 0;
-}
-
