@@ -1,3 +1,11 @@
+#ifdef HAVE_SYS_EPOLL_H
+	#include <sys/epoll.h>
+#elif defined(HAVE_SYS_EVENT_H)
+	#include <sys/types.h>
+	#include <sys/event.h>
+	#include <sys/time.h>
+#endif
+
 #include "events.h"
 
 event_handler *events_create(int max_clients) {
