@@ -3,7 +3,6 @@
 
 #include "base.h"
 
-int config_load_default(config *conf);
 int config_copy(config *dest, config *source);
 config *config_init();
 int config_load(char *filename, config *conf);

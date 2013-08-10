@@ -1,19 +1,6 @@
 #include "config_file.h"
 
-config *config_init() {
-	/* init config */
-	config *conf = malloc(sizeof(config));
-	
-	conf->proxies = malloc(100 * sizeof(proxy*)); /* maximum 100 proxies per server */
-	conf->proxy_count = 0;
-	
-	/* load default */
-	config_load_default (conf);
-	
-	return conf;
-}
-
-int config_load_default(config *conf) {
+static int config_load_default(config *conf) {
 	/* default configuration */
 	
 	conf->max_workers = 1;
@@ -56,6 +43,19 @@ int config_load_default(config *conf) {
 	conf->error_log = 0;
 	
 	return 0;
+}
+
+config *config_init() {
+	/* init config */
+	config *conf = malloc(sizeof(config));
+
+	conf->proxies = malloc(100 * sizeof(proxy*)); /* maximum 100 proxies per server */
+	conf->proxy_count = 0;
+
+	/* load default */
+	config_load_default (conf);
+
+	return conf;
 }
 
 int config_copy(config *dest, config *source) {
