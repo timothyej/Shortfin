@@ -5,7 +5,7 @@ connection *connection_init() {
     	return malloc(sizeof(connection));
 }
 
-connection *connection_setup(master_server *master_srv) {
+connection **connection_setup(master_server *master_srv) {
 	/* pre-setup connections (for performance) */
 	connection **conns = malloc(master_srv->config->max_clients * 2 * sizeof(connection*));
 	
