@@ -163,7 +163,7 @@ int config_load(char *filename, config *conf) {
 			
 				if (key_len > 0 && value_len > 0) {
 					/* save the value */
-					config_save_value (&key, &value, conf, NULL);
+					config_save_value (key, value, conf, NULL);
 				}
 			}
 		}
@@ -303,7 +303,7 @@ int config_load_servers(char *filename, master_server *master_srv) {
 				if (key_len > 0 && value_len > 0) {
 					if (conf != NULL) {
 						/* save the value */
-						config_save_value (&key, &value, conf, scope);
+						config_save_value (key, value, conf, scope);
 				
 						if (strcmp(key, "default") == 0) {
 							/* found default server */

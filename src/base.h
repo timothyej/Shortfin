@@ -118,7 +118,7 @@ typedef struct {
 	char *uri;
 	int version;
 	
-	char *method_len;
+	int method_len;
 	int uri_len;
 	
 	stringpair **headers;
@@ -313,6 +313,10 @@ typedef struct {
 #include "request.h"
 #endif
 
+#ifndef _PROXY_H_
+#include "proxy.h"
+#endif
+
 #ifndef _RESPONSE_H_
 #include "response.h"
 #endif
@@ -327,6 +331,14 @@ typedef struct {
 
 #ifndef _EVENTS_H_
 #include "events.h"
+#endif
+
+#ifndef _STATUS_CODES_H_
+#include "status_codes.h"
+#endif
+
+#ifndef _MIME_TYPES_H_
+#include "mime_types.h"
 #endif
 
 #endif

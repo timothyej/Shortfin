@@ -408,7 +408,7 @@ char *response_char2hex(char *str) {
 	memcpy (new, "\0", 1);
 	
 	for (i = 0; i < str_len; ++i) {
-		sprintf (new, "%s%02X", new, (unsigned char*) str[i]);
+		sprintf (new, "%s%02X", new, (unsigned char) str[i]);
 	}
 	
 	return new;

@@ -24,7 +24,7 @@ connection *connection_setup(master_server *master_srv) {
 int connection_start(master_server *master_srv, connection *conn) {
 	/* start a new connection */
 	conn->status = CONN_STARTED;
-	conn->start_ts = NULL; //time(NULL); not used anyway... // TODO: cache the time
+	conn->start_ts = (time_t) 0; //time(NULL); not used anyway... // TODO: cache the time
 	conn->last_event = 0;
 	conn->buffer_len = 0;
 	conn->read_buffer = NULL;

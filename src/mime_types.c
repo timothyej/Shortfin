@@ -99,7 +99,7 @@ char *mime_types_get_by_filename(char *filename, int len, cache *c) {
 		}
 	}
 
-	char *extension = &ext;
+	char *extension = ext;
 	extension = extension + (16-ext_len);
 
 	return mime_types_get(extension, ext_len, c);

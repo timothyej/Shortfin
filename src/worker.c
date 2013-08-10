@@ -13,7 +13,7 @@ worker *worker_init(master_server *master_srv, int num) {
 	}
 
 	/* attach it */
-	if ((w = shmat(shmid, NULL, 0)) == (char*) -1) {
+	if ((w = shmat(shmid, NULL, 0)) == (void*) -1) {
 		perror ("ERROR shmat");
 		return NULL;
 	}
@@ -92,7 +92,7 @@ static int worker_server(worker *info) {
 	}
 	
 	/* attach it */
-	if ((w = shmat(shmid, NULL, 0)) == (char*) -1) {
+	if ((w = shmat(shmid, NULL, 0)) == (void*) -1) {
 		perror ("ERROR shmat");
 		exit (1);
 	}
