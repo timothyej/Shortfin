@@ -1,47 +1,39 @@
 #include "config_file.h"
 
-static int config_load_default(config *conf) {
-	/* default configuration */
-	
-	conf->max_workers = 1;
-	conf->heartbeat_interval = 3;
-	
-	conf->max_pending = 128000;
-	conf->max_clients = 128000;
-	
-	conf->child_stack_size = 128000;
-	
-	conf->listen_port = 80;
-	conf->server_name = "shortfin/0.9.5";
-	conf->doc_root = "/var/www/";
-	conf->index_file = "index.html";
-	conf->daemonize = 1;
-	
-	conf->cache_files = CACHE_YES;		/* cache responses */
-	conf->cache_other = 0;
-	conf->cache_max_fds = 30000;		/* 30 000 open file descriptors */
-	conf->cache_memory_size = 300000000; 	/* 300 Mb */
-	conf->cache_turn_off_limit = 295000000;
-	conf->cache_dir = "/var/www/cache/";
-	
-	conf->keep_alive = 1;
-	conf->keep_alive_timeout = 5;
-	
-	conf->read_buffer_size = 4046;
-	conf->write_buffer_size = 131072;
-	
-	conf->tcp_nodelay = 1;
+/* default configuration */
+static config default_config = {
+	.max_workers = 1,
+	.heartbeat_interval = 3,
+	.max_pending = 128000,
+	.max_clients = 128000,
+	.child_stack_size = 128000,
+	.listen_port = 80,
+	.server_name = "shortfin/0.9.5",
+	.doc_root = "/var/www/",
+	.index_file = "index.html",
+	.daemonize = 1,
+	.cache_files = CACHE_YES,		/* cache responses */
+	.cache_other = 0,
+	.cache_max_fds = 30000,		/* 30 000 open file descriptors */
+	.cache_memory_size = 300000000, 	/* 300 Mb */
+	.cache_turn_off_limit = 295000000,
+	.cache_dir = "/var/www/cache/",
+	.keep_alive = 1,
+	.keep_alive_timeout = 5,
+	.read_buffer_size = 4046,
+	.write_buffer_size = 131072,
+	.tcp_nodelay = 1,
+	.chroot = "",
+	.default_server = 0,
+	.hostname = "",
+	.access_log_path = "",
+	.error_log_path = "",
+	.access_log = 0,
+	.error_log = 0,
+};
 
-	conf->chroot = "";
-	
-	conf->default_server = 0;
-	conf->hostname = "";
-	
-	conf->access_log_path = "";
-	conf->error_log_path = "";
-	conf->access_log = 0;
-	conf->error_log = 0;
-	
+static int config_load_default(config *conf) {
+	*conf = default_config;
 	return 0;
 }
 
