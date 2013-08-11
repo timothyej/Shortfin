@@ -24,6 +24,111 @@ static response *response_init(server *srv) {
 	return resp;
 }
 
+static int response_build_http_packet(server *srv, response *resp) {
+	/* build HTTP packet */
+	char *status;
+	int status_len = 0;
+	status_codes *sc = srv->status_codes;
+
+	char *hdr1 = NULL;
+	char *hdr2 = NULL;
+
+	int hdr1_len = 0;
+	int hdr2_len = 0;
+
+	/* headers */
+	if (resp->content_type != NULL) {
+		resp->content_type_len = strlen(resp->content_type);
+		hdr1_len = 16+resp->content_type_len;
+	} else {
+		resp->content_type_len = 0;
+	}
+
+	if (hdr1_len > 0) {
+		hdr1 = malloc(hdr1_len+1);
+		hdr1_len = sprintf(hdr1, "\r\nContent-Type: %s", resp->content_type);
+	}
+
+	if (resp->data_len > 0) {
+		hdr2_len = 30; /* 18 + 12 */
+		hdr2 = malloc(hdr2_len+1);
+		hdr2_len = sprintf(hdr2, "\r\nContent-Length: %lu", resp->data_len);
+	}
+
+	/* calculate len */
+	resp->http_packet_len = sc->HTTP_VER_LEN;
+
+	switch (resp->status) {
+		case 200:
+			status = sc->HTTP_200;
+			status_len = sc->HTTP_200_LEN;
+		break;
+
+		case 400:
+			status = sc->HTTP_400;
+			status_len = sc->HTTP_400_LEN;
+		break;
+
+		case 404:
+			status = sc->HTTP_404;
+			status_len = sc->HTTP_404_LEN;
+		break;
+
+		case 501:
+			status = sc->HTTP_501;
+			status_len = sc->HTTP_501_LEN;
+		break;
+
+		case 500:
+		default:
+			status = sc->HTTP_500;
+			status_len = sc->HTTP_500_LEN;
+		break;
+	}
+
+	resp->header_len = sc->HTTP_VER_LEN + status_len + hdr1_len + hdr2_len + srv->server_header_len+4;
+
+	resp->http_packet_len = resp->header_len + resp->data_len;
+
+	/* build http packet */
+	resp->http_packet = malloc(resp->http_packet_len+1);
+
+	memcpy (resp->http_packet, sc->HTTP_VER, sc->HTTP_VER_LEN);
+	memcpy (resp->http_packet+sc->HTTP_VER_LEN, status, status_len);
+
+	if (hdr1_len > 0) {
+		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len, hdr1, hdr1_len);
+	}
+
+	if (hdr2_len > 0) {
+		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len, hdr2, hdr2_len);
+	}
+
+	memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len+hdr2_len, srv->server_header, srv->server_header_len);
+
+	memcpy (resp->http_packet+resp->header_len-4, "\r\n\r\n", 4);
+	memcpy (resp->http_packet+resp->header_len, resp->data, resp->data_len);
+	memcpy (resp->http_packet+resp->header_len+resp->data_len, "\0", 1);
+
+	/* free some memory */
+	if (hdr1 != NULL) {
+		free (hdr1);
+	}
+
+	if (hdr2 != NULL) {
+		free (hdr2);
+	}
+
+	if (resp->status == 200) {
+		/* only free this if it's a 200 OK */
+		/* all the other response types is loaded into memory */
+		free (resp->data);
+		resp->data = NULL;
+	}
+
+	return 0;
+}
+
 int response_build(server *srv, connection *conn) {
 	/* build the response */
 	conn->response = response_init(srv);
@@ -184,111 +289,6 @@ int response_build(server *srv, connection *conn) {
 		f->http_status = resp->status;
 	}
 
-	return 0;
-}
-
-int response_build_http_packet(server *srv, response *resp) {
-	/* build HTTP packet */
-	char *status;
-	int status_len = 0;
-	status_codes *sc = srv->status_codes;
-	
-	char *hdr1 = NULL;
-	char *hdr2 = NULL;
-	
-	int hdr1_len = 0;
-	int hdr2_len = 0;
-	
-	/* headers */
-	if (resp->content_type != NULL) {
-		resp->content_type_len = strlen(resp->content_type);
-		hdr1_len = 16+resp->content_type_len;
-	} else {
-		resp->content_type_len = 0;
-	}
-	
-	if (hdr1_len > 0) {
-		hdr1 = malloc(hdr1_len+1);
-		hdr1_len = sprintf(hdr1, "\r\nContent-Type: %s", resp->content_type);
-	}
-	
-	if (resp->data_len > 0) {
-		hdr2_len = 30; /* 18 + 12 */
-		hdr2 = malloc(hdr2_len+1);
-		hdr2_len = sprintf(hdr2, "\r\nContent-Length: %lu", resp->data_len);		
-	}
-
-	/* calculate len */
-	resp->http_packet_len = sc->HTTP_VER_LEN;
-	
-	switch (resp->status) {
-		case 200:
-			status = sc->HTTP_200;
-			status_len = sc->HTTP_200_LEN;
-		break;
-		
-		case 400:
-			status = sc->HTTP_400;
-			status_len = sc->HTTP_400_LEN;
-		break;
-		
-		case 404:
-			status = sc->HTTP_404;
-			status_len = sc->HTTP_404_LEN;
-		break;
-		
-		case 501:
-			status = sc->HTTP_501;
-			status_len = sc->HTTP_501_LEN;
-		break;
-		
-		case 500:
-		default:
-			status = sc->HTTP_500;
-			status_len = sc->HTTP_500_LEN;
-		break;
-	}
-	
-	resp->header_len = sc->HTTP_VER_LEN + status_len + hdr1_len + hdr2_len + srv->server_header_len+4;
-	
-	resp->http_packet_len = resp->header_len + resp->data_len;
-	
-	/* build http packet */
-	resp->http_packet = malloc(resp->http_packet_len+1);
-	
-	memcpy (resp->http_packet, sc->HTTP_VER, sc->HTTP_VER_LEN);
-	memcpy (resp->http_packet+sc->HTTP_VER_LEN, status, status_len);
-	
-	if (hdr1_len > 0) {
-		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len, hdr1, hdr1_len);
-	}
-	
-	if (hdr2_len > 0) {
-		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len, hdr2, hdr2_len);
-	}	
-	
-	memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len+hdr2_len, srv->server_header, srv->server_header_len);
-	
-	memcpy (resp->http_packet+resp->header_len-4, "\r\n\r\n", 4);
-	memcpy (resp->http_packet+resp->header_len, resp->data, resp->data_len);
-	memcpy (resp->http_packet+resp->header_len+resp->data_len, "\0", 1);
-	
-	/* free some memory */
-	if (hdr1 != NULL) {
-		free (hdr1);
-	}
-	
-	if (hdr2 != NULL) {
-		free (hdr2);
-	}
-	
-	if (resp->status == 200) {
-		/* only free this if it's a 200 OK */
-		/* all the other response types is loaded into memory */
-		free (resp->data);
-		resp->data = NULL;
-	}	
-	
 	return 0;
 }
 
