@@ -14,6 +14,22 @@ sock *socket_init() {
     	return s;
 }
 
+static int socket_setnonblocking(int fd) {
+	int flags;
+
+	/* If they have O_NONBLOCK, use the Posix way to do it */
+#if 1//defined(O_NONBLOCK)
+	/* FIXME: O_NONBLOCK is defined but broken on SunOS 4.1.x and AIX 3.2.5. */
+	if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
+		flags = 0;
+	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+#else
+	/* Otherwise, use the old way of doing it */
+	flags = 1;
+	return ioctl(fd, FIOBIO, &flags);
+#endif
+}
+
 static int socket_listen_setup(master_server *master_srv, int fd) {
 	/* disable / enable the Nagle (TCP No Delay) algorithm */
 	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&master_srv->config->tcp_nodelay, sizeof(master_srv->config->tcp_nodelay)) == -1) {
@@ -131,22 +147,6 @@ int socket_setup(master_server *master_srv, int fd) {
 	}
 	
 	return 0;
-}
-
-int socket_setnonblocking(int fd) {
-	int flags;
-
-	/* If they have O_NONBLOCK, use the Posix way to do it */
-#if 1//defined(O_NONBLOCK)
-	/* FIXME: O_NONBLOCK is defined but broken on SunOS 4.1.x and AIX 3.2.5. */
-	if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
-		flags = 0;
-	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-#else
-	/* Otherwise, use the old way of doing it */
-	flags = 1;
-	return ioctl(fd, FIOBIO, &flags);
-#endif
 }
 
 int socket_setquickack(int fd) {
