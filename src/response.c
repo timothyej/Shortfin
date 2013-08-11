@@ -156,6 +156,20 @@ static int response_get_index_file(server *srv, file_item *f) {
 	return 0;
 }
 
+static int response_file_exist(char *filename) {
+	/* check if a file exists on disc */
+	struct stat sts;
+	if (stat(filename, &sts) == -1 && errno == ENOENT) {
+		return 0;
+	}
+
+	if (S_ISDIR(sts.st_mode)) {
+		return 0;
+	}
+
+	return 1;
+}
+
 static int response_read_file(server *srv, connection *conn, file_item *f) {
 	response *resp = conn->response;
 
@@ -372,20 +386,6 @@ int response_build(server *srv, connection *conn) {
 	}
 
 	return 0;
-}
-
-int response_file_exist(char *filename) {
-	/* check if a file exists on disc */
-	struct stat sts;
-	if (stat(filename, &sts) == -1 && errno == ENOENT) {
-    		return 0;
-	}
-	
-	if (S_ISDIR(sts.st_mode)) {
-		return 0;
-	}
-	
-	return 1;
 }
 
 int response_free(response *resp) {
