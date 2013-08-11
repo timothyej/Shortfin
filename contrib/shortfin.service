@@ -1,0 +1,11 @@
+[Service]
+Nice=5
+Type=simple
+PIDFile=/run/shortfin.pid
+ExecStartPre=/bin/mount --make-rprivate /
+ExecStart=/usr/local/sbin/shortfin -c /usr/local/etc/shortfin/shortfin.conf -d
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -QUIT $MAINPID
+
+[Install]
+WantedBy=multi-user.target
