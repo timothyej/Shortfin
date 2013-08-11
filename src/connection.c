@@ -1,6 +1,14 @@
+#include <fcntl.h>
+#include <netinet/tcp.h>
+#include <sys/epoll.h>
+#include <sys/sendfile.h>
+#include <sys/uio.h>
+#include <time.h>
+
+#include "safe.h"
 #include "connection.h"
 
-connection *connection_init() {
+static connection *connection_init() {
 	/* init connection struct */
     	return malloc(sizeof(connection));
 }

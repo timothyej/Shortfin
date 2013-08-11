@@ -1,3 +1,6 @@
+#include <fcntl.h>
+#include <netinet/tcp.h>
+
 #include "socket.h"
 
 sock *socket_init() {
@@ -9,6 +12,64 @@ sock *socket_init() {
 	s->clilen = sizeof(s->cli_addr);
 	
     	return s;
+}
+
+static int socket_setnonblocking(int fd) {
+	int flags;
+
+	/* If they have O_NONBLOCK, use the Posix way to do it */
+#if 1//defined(O_NONBLOCK)
+	/* FIXME: O_NONBLOCK is defined but broken on SunOS 4.1.x and AIX 3.2.5. */
+	if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
+		flags = 0;
+	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+#else
+	/* Otherwise, use the old way of doing it */
+	flags = 1;
+	return ioctl(fd, FIOBIO, &flags);
+#endif
+}
+
+static int socket_listen_setup(master_server *master_srv, int fd) {
+	/* disable / enable the Nagle (TCP No Delay) algorithm */
+	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&master_srv->config->tcp_nodelay, sizeof(master_srv->config->tcp_nodelay)) == -1) {
+		perror ("ERROR setsockopt(TCP_NODELAY)");
+		return -1;
+	}
+
+	/* set send buffer size */
+	if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char*)&master_srv->config->write_buffer_size, sizeof(master_srv->config->write_buffer_size)) == -1) {
+		perror ("ERROR setsockopt(SO_SNDBUF)");
+		return -1;
+	}
+
+	/* set read buffer size */
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&master_srv->config->read_buffer_size, sizeof(master_srv->config->read_buffer_size)) == -1) {
+		perror ("ERROR setsockopt(SO_RCVBUF)");
+		return -1;
+	}
+
+	/* set defer accept to 5 sec */
+	int val = 5;
+	if (setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, (char*)&val, sizeof(int)) == -1) {
+		perror ("ERROR setsockopt(TCP_DEFER_ACCEPT)");
+		return -1;
+	}
+
+	/* non-blocking socket */
+	socket_setnonblocking (fd);
+
+	return 0;
+}
+
+int socket_setquickack(int fd) {
+	int arg = 0;
+	if (setsockopt(fd, IPPROTO_TCP, TCP_QUICKACK, (char*)&arg, sizeof(arg)) == -1) {
+		perror ("ERROR setsockopt(TCP_QUICKACK)");
+		return -1;
+	}
+
+	return 0;
 }
 
 int socket_listen(server *srv) {
@@ -76,38 +137,6 @@ int socket_free(sock *s) {
 	return 0;
 }
 
-int socket_listen_setup(master_server *master_srv, int fd) {
-	/* disable / enable the Nagle (TCP No Delay) algorithm */
-	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&master_srv->config->tcp_nodelay, sizeof(master_srv->config->tcp_nodelay)) == -1) {
-		perror ("ERROR setsockopt(TCP_NODELAY)");
-		return -1;
-	}
-	
-	/* set send buffer size */
-	if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char*)&master_srv->config->write_buffer_size, sizeof(master_srv->config->write_buffer_size)) == -1) {
-		perror ("ERROR setsockopt(SO_SNDBUF)");
-		return -1;
-	}
-	
-	/* set read buffer size */
-	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&master_srv->config->read_buffer_size, sizeof(master_srv->config->read_buffer_size)) == -1) {
-		perror ("ERROR setsockopt(SO_RCVBUF)");
-		return -1;
-	}
-	
-	/* set defer accept to 5 sec */
-	int val = 5;
-	if (setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, (char*)&val, sizeof(int)) == -1) {
-		perror ("ERROR setsockopt(TCP_DEFER_ACCEPT)");
-		return -1;
-	}
-	
-	/* non-blocking socket */
-	socket_setnonblocking (fd);
-	
-	return 0;
-}
-
 int socket_setup(master_server *master_srv, int fd) {
 	/* disable / enable the Nagle (TCP No Delay) algorithm */
 	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&master_srv->config->tcp_nodelay, sizeof(master_srv->config->tcp_nodelay)) == -1) {
@@ -124,32 +153,6 @@ int socket_setup(master_server *master_srv, int fd) {
 	/* set read buffer size */
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&master_srv->config->read_buffer_size, sizeof(master_srv->config->read_buffer_size)) == -1) {
 		perror ("ERROR setsockopt(SO_RCVBUF)");
-		return -1;
-	}
-	
-	return 0;
-}
-
-int socket_setnonblocking(int fd) {
-	int flags;
-
-	/* If they have O_NONBLOCK, use the Posix way to do it */
-#if 1//defined(O_NONBLOCK)
-	/* FIXME: O_NONBLOCK is defined but broken on SunOS 4.1.x and AIX 3.2.5. */
-	if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
-		flags = 0;
-	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-#else
-	/* Otherwise, use the old way of doing it */
-	flags = 1;
-	return ioctl(fd, FIOBIO, &flags);
-#endif
-}
-
-int socket_setquickack(int fd) {
-	int arg = 0;
-	if (setsockopt(fd, IPPROTO_TCP, TCP_QUICKACK, (char*)&arg, sizeof(arg)) == -1) {
-		perror ("ERROR setsockopt(TCP_QUICKACK)");
 		return -1;
 	}
 	

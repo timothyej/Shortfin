@@ -4,6 +4,11 @@
 #include <assert.h>
 #include "cache.h"
 
+struct cache_node {
+    void *value;
+    struct cache_node **nodes;
+    int used;
+};
 
 /* Init cache */
 int cache_init(cache* c) {
@@ -22,7 +27,7 @@ int cache_init(cache* c) {
 
 
 /* Init cache node */
-int cache_init_node(cnode *n, int size) {
+static int cache_init_node(cnode *n, int size) {
    	n->used = 0;
    	n->value = NULL;
     	n->nodes = malloc(sizeof(cnode) * size);
@@ -36,7 +41,7 @@ int cache_init_node(cnode *n, int size) {
 }
 
 /* create new node */
-cnode *cache_create_node() {
+static cnode *cache_create_node() {
    	cnode *newnode = calloc(1, sizeof(*newnode));
      	cache_init_node(newnode, 256);
      
@@ -108,17 +113,6 @@ void* cache_get_exists(cache *c, char* id, int len) {
 	return node->value;
 }
 
-cnode* cache_get_node(cache *c, char* id, int len) {
-    	cnode *node = c->nodes[ (unsigned int)id[len-1]<256?id[len-1]:255 ];
-
-    	int i = len-1;
-	while ((--i) > -1) {
-        	node = node->nodes[ (unsigned int)id[i]<256?id[i]:255 ];
-    	}
-
-	return node;
-}
-
 /* Check if cache entry exists */
 int cache_exists(cache *c, char* id, int len) {
     	cnode *node = c->nodes[ (unsigned int)id[len-1]<256?id[len-1]:255 ];
@@ -137,22 +131,8 @@ int cache_exists(cache *c, char* id, int len) {
 	return 0;
 }
 
-/* Free cache */
-int cache_free(cache *c) {
-	int i;
-	for (i = 0; i < 256; ++i) {
-		if (c->nodes[i] != NULL) {
-			cache_free_nodes (c->nodes[i]);	
-		}
-	}
-
-	free (c->nodes);
-	free (c);
-	return 0;
-}
-
 /* Free all nodes */
-int cache_free_nodes(cnode *n) {
+static int cache_free_nodes(cnode *n) {
 	int i;
 	for (i = 0; i < 256; ++i) {
 		if (n->nodes[i] != NULL) {
@@ -166,5 +146,19 @@ int cache_free_nodes(cnode *n) {
 
 	free (n->nodes);
 	free (n);
+	return 0;
+}
+
+/* Free cache */
+int cache_free(cache *c) {
+	int i;
+	for (i = 0; i < 256; ++i) {
+		if (c->nodes[i] != NULL) {
+			cache_free_nodes (c->nodes[i]);	
+		}
+	}
+
+	free (c->nodes);
+	free (c);
 	return 0;
 }
