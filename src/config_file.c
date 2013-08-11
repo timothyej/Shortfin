@@ -163,7 +163,7 @@ int config_load(char *filename, config *conf) {
 			
 				if (key_len > 0 && value_len > 0) {
 					/* save the value */
-					config_save_value (&key, &value, conf, NULL);
+					config_save_value (key, value, conf, NULL);
 				}
 			}
 		}
@@ -303,7 +303,7 @@ int config_load_servers(char *filename, master_server *master_srv) {
 				if (key_len > 0 && value_len > 0) {
 					if (conf != NULL) {
 						/* save the value */
-						config_save_value (&key, &value, conf, scope);
+						config_save_value (key, value, conf, scope);
 				
 						if (strcmp(key, "default") == 0) {
 							/* found default server */
@@ -340,8 +340,7 @@ int config_save_value(char *key, char *value, config *conf, char *scope) {
 				conf->proxies[conf->proxy_count-1]->port = atoi(value);
 			}
 			else if (strcmp(key, "host") == 0) {
-				conf->proxies[conf->proxy_count-1]->host = malloc(strlen(value)+1);
-				memcpy (conf->proxies[conf->proxy_count-1]->host, value, strlen(value)+1);
+				conf->proxies[conf->proxy_count-1]->host = strdup(value);
 			}
 			else if (strcmp(key, "cache") == 0) {
 				conf->proxies[conf->proxy_count-1]->cache = atoi(value);
@@ -371,16 +370,13 @@ int config_save_value(char *key, char *value, config *conf, char *scope) {
 		conf->max_clients = atoi(value);
 	}
 	else if (strcmp(key, "server-name") == 0) {
-		conf->server_name = malloc(strlen(value)+1);
-		memcpy (conf->server_name, value, strlen(value)+1);
+		conf->server_name = strdup(value);
 	}
 	else if (strcmp(key, "doc-root") == 0) {
-		conf->doc_root = malloc(strlen(value)+1);
-		memcpy (conf->doc_root, value, strlen(value)+1);
+		conf->doc_root = strdup(value);
 	}
 	else if (strcmp(key, "index-file") == 0) {
-		conf->index_file = malloc(strlen(value)+1);
-		memcpy (conf->index_file, value, strlen(value)+1);
+		conf->index_file = strdup(value);
 	}
 	else if (strcmp(key, "daemonize") == 0) {
 		conf->daemonize = atoi(value);
@@ -409,8 +405,7 @@ int config_save_value(char *key, char *value, config *conf, char *scope) {
 		conf->cache_turn_off_limit = atol(value);
 	}
 	else if (strcmp(key, "cache-dir") == 0) {
-		conf->cache_dir = malloc(strlen(value)+1);
-		memcpy (conf->cache_dir, value, strlen(value)+1);
+		conf->cache_dir = strdup(value);
 	}
 	else if (strcmp(key, "read-buffer-size") == 0) {
 		conf->read_buffer_size = atoi(value);
@@ -422,21 +417,17 @@ int config_save_value(char *key, char *value, config *conf, char *scope) {
 		conf->tcp_nodelay = atoi(value);
 	}
 	else if (strcmp(key, "chroot") == 0) {
-		conf->chroot = malloc(strlen(value)+1);
-		memcpy (conf->chroot, value, strlen(value)+1);
+		conf->chroot = strdup(value);
 	}
 	else if (strcmp(key, "hostname") == 0) {
-		conf->hostname = malloc(strlen(value)+1);
-		memcpy (conf->hostname, value, strlen(value)+1);
+		conf->hostname = strdup(value);
 	}
 	else if (strcmp(key, "access-log") == 0) {
-		conf->access_log_path = malloc(strlen(value)+1);
-		memcpy (conf->access_log_path, value, strlen(value)+1);
+		conf->access_log_path = strdup(value);
 		conf->access_log = 1;
 	}
 	else if (strcmp(key, "error-log") == 0) {
-		conf->error_log_path = malloc(strlen(value)+1);
-		memcpy (conf->error_log_path, value, strlen(value)+1);
+		conf->error_log_path = strdup(value);
 		conf->error_log = 1;
 	}
 	else if (strcmp(key, "keep-alive") == 0) {

@@ -1,5 +1,9 @@
 #include "worker.h"
 
+static int worker_server(void *p);
+static void *worker_keep_alive_cleanup(void *p);
+static void *worker_heartbeat(void *p);
+
 worker *worker_init(master_server *master_srv, int num) {
 	/* init a new worker */
 	int shmid;
@@ -13,7 +17,7 @@ worker *worker_init(master_server *master_srv, int num) {
 	}
 
 	/* attach it */
-	if ((w = shmat(shmid, NULL, 0)) == (char*) -1) {
+	if ((w = shmat(shmid, NULL, 0)) == (void*) -1) {
 		perror ("ERROR shmat");
 		return NULL;
 	}
@@ -74,8 +78,9 @@ int worker_spawn(int number, master_server *master_srv) {
 	return 0;
 }
 
-static int worker_server(worker *info) {
+static int worker_server(void *p) {
 	/* server worker */
+	worker *info = p;
 	int nfds, fd, i;
 	worker *w;
 
@@ -92,7 +97,7 @@ static int worker_server(worker *info) {
 	}
 	
 	/* attach it */
-	if ((w = shmat(shmid, NULL, 0)) == (char*) -1) {
+	if ((w = shmat(shmid, NULL, 0)) == (void*) -1) {
 		perror ("ERROR shmat");
 		exit (1);
 	}
@@ -115,12 +120,12 @@ static int worker_server(worker *info) {
 	/* starting keep-alive clean-up thread */
 	printf (" * Starting keep-alive clean-up thread for worker #%d.\n", num+1);
 	pthread_t thread_keep_alive;
-	int rc_cleanup = pthread_create(&thread_keep_alive, NULL, worker_keep_alive_cleanup, w);
+	pthread_create(&thread_keep_alive, NULL, worker_keep_alive_cleanup, w);
 	
 	/* starting heartbeat thread */
 	printf (" * Starting heartbeat thread for worker #%d.\n", num+1);
 	pthread_t thread_heartbeat;
-	int rc_heartbeat = pthread_create(&thread_heartbeat, NULL, worker_heartbeat, w);
+	pthread_create(&thread_heartbeat, NULL, worker_heartbeat, w);
 	
 	/* entering main loop... */
 	while (master_srv->running) {
@@ -169,9 +174,10 @@ static int worker_server(worker *info) {
 	exit (0);
 }
 
-void *worker_keep_alive_cleanup(worker *w) {
+static void *worker_keep_alive_cleanup(void *p) {
 	/* garbage collector for keep-alive connections */
 	int i;
+	worker *w = p;
 	master_server *master_srv = w->master_srv;
 	time_t ts;
 	connection *conn;
@@ -209,8 +215,10 @@ void *worker_keep_alive_cleanup(worker *w) {
 	pthread_exit (NULL);
 }
 
-void *worker_heartbeat(worker *w) {
+static void *worker_heartbeat(void *p) {
 	/* worker heartbeat */
+	worker *w = p;
+
 	while (1) {
 		w->heartbeat = time(NULL);
 		sleep (w->master_srv->config->heartbeat_interval);

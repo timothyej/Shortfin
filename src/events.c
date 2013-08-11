@@ -2,23 +2,19 @@
 
 event_handler *events_create(int max_clients) {
 	/* create a new event handler (epoll, kqueue etc.) */
-	int i;
 	event_handler *evhand = malloc(sizeof(event_handler));
 
 	/* epoll */
 #ifdef HAVE_SYS_EPOLL_H
-	evhand->events = malloc(max_clients * sizeof(struct epoll_event*));
-	
-	for (i = 0; i < max_clients; ++i) {
-		evhand->events[i] = malloc(sizeof(struct epoll_event));
-		evhand->events[i]->events = 0;
-	}
-	
+	evhand->events = calloc(max_clients, sizeof(struct epoll_event));
+
 	if ((evhand->fd = epoll_create(max_clients)) == -1) {
 		perror ("ERROR epoll_create");
 		exit (1);
 	}
 #elif defined(HAVE_SYS_EVENT_H)
+	int i;
+
 	/* kqueue */
 	evhand->events = malloc(max_clients * sizeof(struct kevent*));
 	
@@ -154,15 +150,14 @@ int events_get_fd(event_handler *evhand, int num) {
 
 int events_free(event_handler *evhand, int max_clients) {
 	/* free an event handler */
-	int i;
 	
 	/* epoll */
 #ifdef HAVE_SYS_EPOLL_H
-	for (i = 0; i < max_clients; ++i) {
-		free (evhand->events[i]);
-	}
+	free (evhand->events);
 
 #elif defined(HAVE_SYS_EVENT_H)
+
+	int i;
 	/* kqueue */
 	for (i = 0; i < max_clients; ++i) {
 		free (evhand->events[i]);

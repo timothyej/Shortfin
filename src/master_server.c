@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -24,10 +25,11 @@ static void signal_handler(int sig) {
 	}
 }
 
-void *heartbeat_monitor(master_server *master_srv) {
+void *heartbeat_monitor(void *p) {
 	/* heartbeat monitor */
-	int i, c;
+	int i;
 	time_t ts = 0;
+	master_server *master_srv = p;
 	
 	while (1) {
 		ts = time(NULL);
@@ -162,8 +164,7 @@ int main(int argc, char *argv[]) {
 	while ((c = getopt(argc, argv, "c:d")) != -1) {
 		switch (c) {
 			case 'c':
-				master_srv->config_file = malloc(strlen(optarg)+1);
-				memcpy (master_srv->config_file, optarg, strlen(optarg)+1);
+				master_srv->config_file = strdup(optarg);
 			break;
 			
 			case 'd': 
@@ -252,7 +253,7 @@ int main(int argc, char *argv[]) {
 		
 			/* add it to the event handler */
 			if (events_add_event(ev_handler, srv->server_socket->fd) == -1) {
-				error ("ERROR events_add_event");
+				perror ("ERROR events_add_event");
 				exit (1);
 			}
 
@@ -289,7 +290,7 @@ int main(int argc, char *argv[]) {
 			
 					/* also by hostname:port */
 					char *host_port = malloc(strlen(tmp_hostname)+8);
-					int host_port_len = sprintf(host_port, "%s:%d", tmp_hostname, srv->config->listen_port);
+					sprintf(host_port, "%s:%d", tmp_hostname, srv->config->listen_port);
 			
 					cache_add (master_srv->servers_by_host, host_port, srv);
 			
@@ -310,7 +311,7 @@ int main(int argc, char *argv[]) {
 	/* starting heartbeat checking thread */
 	printf (" * Starting heartbeat monitor thread.\n");
 	pthread_t thread_heartbeat;
-	int rc_heartbeat = pthread_create(&thread_heartbeat, NULL, heartbeat_monitor, master_srv);
+	pthread_create(&thread_heartbeat, NULL, heartbeat_monitor, master_srv);
 	
 	printf (" * The server is up and running!\n");
 	
@@ -341,7 +342,7 @@ int main(int argc, char *argv[]) {
 	
 				/* add it to the worker's event handler */
 				if (events_add_event_2(&w->ev_handler, fd) == -1) {
-					error ("ERROR events_add_event_2");
+					perror ("ERROR events_add_event_2");
 				}
 			}
 		}

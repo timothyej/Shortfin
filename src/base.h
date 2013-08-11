@@ -3,12 +3,17 @@
 
 #include <config.h>
 
+#include <ctype.h>
+#include <errno.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <semaphore.h>
+#include <unistd.h>
 
 #ifdef HAVE_SYS_EPOLL_H
 	#include <sys/epoll.h>
@@ -117,7 +122,7 @@ typedef struct {
 	char *uri;
 	int version;
 	
-	char *method_len;
+	int method_len;
 	int uri_len;
 	
 	stringpair **headers;
@@ -166,7 +171,7 @@ typedef struct {
 typedef struct {
 	int fd;
 #ifdef HAVE_SYS_EPOLL_H
-	struct epoll_event **events;
+	struct epoll_event *events;
 #elif defined(HAVE_SYS_EVENT_H)
 	struct kevent changes;
 	struct kevent *events;
@@ -312,6 +317,10 @@ typedef struct {
 #include "request.h"
 #endif
 
+#ifndef _PROXY_H_
+#include "proxy.h"
+#endif
+
 #ifndef _RESPONSE_H_
 #include "response.h"
 #endif
@@ -326,6 +335,14 @@ typedef struct {
 
 #ifndef _EVENTS_H_
 #include "events.h"
+#endif
+
+#ifndef _STATUS_CODES_H_
+#include "status_codes.h"
+#endif
+
+#ifndef _MIME_TYPES_H_
+#include "mime_types.h"
 #endif
 
 #endif

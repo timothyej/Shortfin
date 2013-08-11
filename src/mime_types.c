@@ -1,5 +1,12 @@
 #include "mime_types.h"
 
+int mime_types_add(char *ext, char *mime, cache *c) {
+	char *value = strdup(mime);
+
+	cache_add (c, ext, value);
+	return 0;
+}
+
 /* load all mime types */
 cache *mime_types_init() {
 	cache *c = calloc(1, sizeof(*c));
@@ -62,15 +69,6 @@ cache *mime_types_init() {
 	return c;
 }
 
-int mime_types_add(char *ext, char *mime, cache *c) {
-	char *value = malloc(strlen(mime)+1);
-	memcpy (value, mime, strlen(mime)+1);
-
-	cache_add (c, ext, value);
-	
-	return 0;
-}
-
 char *mime_types_get(char *ext, int len, cache *c) {
 	if (len > 1) {
 		if (cache_exists(c, ext, len) == 0) {
@@ -100,7 +98,7 @@ char *mime_types_get_by_filename(char *filename, int len, cache *c) {
 		}
 	}
 
-	char *extension = &ext;
+	char *extension = ext;
 	extension = extension + (16-ext_len);
 
 	return mime_types_get(extension, ext_len, c);

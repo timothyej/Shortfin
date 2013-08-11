@@ -5,7 +5,7 @@ connection *connection_init() {
     	return malloc(sizeof(connection));
 }
 
-connection *connection_setup(master_server *master_srv) {
+connection **connection_setup(master_server *master_srv) {
 	/* pre-setup connections (for performance) */
 	connection **conns = malloc(master_srv->config->max_clients * 2 * sizeof(connection*));
 	
@@ -24,7 +24,7 @@ connection *connection_setup(master_server *master_srv) {
 int connection_start(master_server *master_srv, connection *conn) {
 	/* start a new connection */
 	conn->status = CONN_STARTED;
-	conn->start_ts = NULL; //time(NULL); not used anyway... // TODO: cache the time
+	conn->start_ts = (time_t) 0; //time(NULL); not used anyway... // TODO: cache the time
 	conn->last_event = 0;
 	conn->buffer_len = 0;
 	conn->read_buffer = NULL;
@@ -109,7 +109,7 @@ int connection_handle(worker *w, connection *conn) {
 		if (conn->response->cached) {
 			/* using sendfile on a cached file */
 			off_t offset = 0;
-			if (sendfile(conn->fd, conn->response->file->fd, &offset, conn->response->http_packet_len) == -1) {
+			if (sendfile(conn->fd, fileno(conn->response->file->fd), &offset, conn->response->http_packet_len) == -1) {
 				perror ("ERROR sendfile");
 				conn->status = CONN_ERROR;
 			}
