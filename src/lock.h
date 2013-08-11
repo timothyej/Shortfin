@@ -3,7 +3,6 @@
 
 /* mutex lock between processes with semaphores */
 
-#include <semaphore.h>
 #include "base.h"
 
 int lock_init(lock *l);

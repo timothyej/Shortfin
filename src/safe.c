@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "safe.h"
 
 int safe_warn(server *srv, const char *format, ...) {

@@ -1,5 +1,7 @@
 #include "lock.h"
 
+#include <semaphore.h>
+
 int lock_init(lock *l) {
 	/* init a new semaphore */
 	sem_init (&l->mutex, 0, 1);

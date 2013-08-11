@@ -1,6 +1,10 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+
 #include "response.h"
 
-response *response_init(server *srv) {
+static response *response_init(server *srv) {
 	/* init a new response struct */
 	response *resp = malloc(sizeof(response));
 	
@@ -18,6 +22,220 @@ response *response_init(server *srv) {
 	resp->cached = 0;
 	
 	return resp;
+}
+
+static int response_build_http_packet(server *srv, response *resp) {
+	/* build HTTP packet */
+	char *status;
+	int status_len = 0;
+	status_codes *sc = srv->status_codes;
+
+	char *hdr1 = NULL;
+	char *hdr2 = NULL;
+
+	int hdr1_len = 0;
+	int hdr2_len = 0;
+
+	/* headers */
+	if (resp->content_type != NULL) {
+		resp->content_type_len = strlen(resp->content_type);
+		hdr1_len = 16+resp->content_type_len;
+	} else {
+		resp->content_type_len = 0;
+	}
+
+	if (hdr1_len > 0) {
+		hdr1 = malloc(hdr1_len+1);
+		hdr1_len = sprintf(hdr1, "\r\nContent-Type: %s", resp->content_type);
+	}
+
+	if (resp->data_len > 0) {
+		hdr2_len = 30; /* 18 + 12 */
+		hdr2 = malloc(hdr2_len+1);
+		hdr2_len = sprintf(hdr2, "\r\nContent-Length: %lu", resp->data_len);
+	}
+
+	/* calculate len */
+	resp->http_packet_len = sc->HTTP_VER_LEN;
+
+	switch (resp->status) {
+		case 200:
+			status = sc->HTTP_200;
+			status_len = sc->HTTP_200_LEN;
+		break;
+
+		case 400:
+			status = sc->HTTP_400;
+			status_len = sc->HTTP_400_LEN;
+		break;
+
+		case 404:
+			status = sc->HTTP_404;
+			status_len = sc->HTTP_404_LEN;
+		break;
+
+		case 501:
+			status = sc->HTTP_501;
+			status_len = sc->HTTP_501_LEN;
+		break;
+
+		case 500:
+		default:
+			status = sc->HTTP_500;
+			status_len = sc->HTTP_500_LEN;
+		break;
+	}
+
+	resp->header_len = sc->HTTP_VER_LEN + status_len + hdr1_len + hdr2_len + srv->server_header_len+4;
+
+	resp->http_packet_len = resp->header_len + resp->data_len;
+
+	/* build http packet */
+	resp->http_packet = malloc(resp->http_packet_len+1);
+
+	memcpy (resp->http_packet, sc->HTTP_VER, sc->HTTP_VER_LEN);
+	memcpy (resp->http_packet+sc->HTTP_VER_LEN, status, status_len);
+
+	if (hdr1_len > 0) {
+		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len, hdr1, hdr1_len);
+	}
+
+	if (hdr2_len > 0) {
+		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len, hdr2, hdr2_len);
+	}
+
+	memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len+hdr2_len, srv->server_header, srv->server_header_len);
+
+	memcpy (resp->http_packet+resp->header_len-4, "\r\n\r\n", 4);
+	memcpy (resp->http_packet+resp->header_len, resp->data, resp->data_len);
+	memcpy (resp->http_packet+resp->header_len+resp->data_len, "\0", 1);
+
+	/* free some memory */
+	if (hdr1 != NULL) {
+		free (hdr1);
+	}
+
+	if (hdr2 != NULL) {
+		free (hdr2);
+	}
+
+	if (resp->status == 200) {
+		/* only free this if it's a 200 OK */
+		/* all the other response types is loaded into memory */
+		free (resp->data);
+		resp->data = NULL;
+	}
+
+	return 0;
+}
+
+static int response_get_index_file(server *srv, file_item *f) {
+	/* get index file */
+	int len = 0;
+	char *abs_path = malloc(f->abs_path_len+strlen(srv->config->index_file)+2);
+
+	memcpy (abs_path, f->abs_path, f->abs_path_len);
+
+	if (f->abs_path[f->abs_path_len-1] == '/') {
+		memcpy (abs_path+f->abs_path_len, srv->config->index_file, strlen(srv->config->index_file)+1);
+		len = f->abs_path_len + strlen(srv->config->index_file);
+	} else {
+		memcpy (abs_path+f->abs_path_len, "/", 1);
+		memcpy (abs_path+f->abs_path_len+1, srv->config->index_file, strlen(srv->config->index_file)+1);
+		len = f->abs_path_len + strlen(srv->config->index_file) + 1;
+	}
+
+	free (f->abs_path);
+
+	f->abs_path = abs_path;
+	f->abs_path_len = len;
+
+	f->filename = srv->config->index_file;
+	f->filename_len = strlen(f->filename);
+
+	return 0;
+}
+
+static int response_file_exist(char *filename) {
+	/* check if a file exists on disc */
+	struct stat sts;
+	if (stat(filename, &sts) == -1 && errno == ENOENT) {
+		return 0;
+	}
+
+	if (S_ISDIR(sts.st_mode)) {
+		return 0;
+	}
+
+	return 1;
+}
+
+static int response_read_file(server *srv, connection *conn, file_item *f) {
+	response *resp = conn->response;
+
+	if (f->fd == NULL) {
+		/* not a cached file descriptor, open it again */
+		if (f->filename_len == 0) {
+			response_get_index_file (srv, f);
+		} else if (response_file_exist(f->abs_path) == 0) {
+			response_get_index_file (srv, f);
+		}
+
+		if (!(f->fd = fopen(f->abs_path, "rb"))) {
+			return errno;
+		}
+
+		/* get file size */
+		fseek (f->fd, 0, SEEK_END);
+		f->size = ftell(f->fd);
+		fseek (f->fd, 0, SEEK_SET);
+
+		if (srv->config->cache_files == CACHE_FD) {
+			++srv->cache_open_fds;
+		}
+	}
+
+	if (f->size < 1) {
+		fclose (f->fd);
+		f->fd = NULL;
+		return -EINVAL;
+	}
+
+	/* allocate memory */
+	if (!(resp->data = malloc(f->size+1))) {
+		fclose (f->fd);
+		f->fd = NULL;
+		safe_warn (srv, "could not allocate memory for file.");
+		return -ENOMEM;
+	}
+
+	/* read file contents into buffer */
+	fread (resp->data, f->size, 1, f->fd);
+	fseek (f->fd, 0, SEEK_SET);
+
+	resp->data_len = f->size;
+
+	/* dont't cache file descriptors, close it */
+	if (srv->config->cache_files != CACHE_FD) {
+		fclose (f->fd);
+		f->fd = NULL;
+	}
+
+	return 0;
+}
+
+static char *response_char2hex(char *str) {
+	int str_len = strlen(str);
+	char *new = malloc(str_len*3+1);
+	int i;
+
+	memcpy (new, "\0", 1);
+
+	for (i = 0; i < str_len; ++i) {
+		sprintf (new, "%s%02X", new, (unsigned char) str[i]);
+	}
+
+	return new;
 }
 
 int response_build(server *srv, connection *conn) {
@@ -183,206 +401,6 @@ int response_build(server *srv, connection *conn) {
 	return 0;
 }
 
-int response_build_http_packet(server *srv, response *resp) {
-	/* build HTTP packet */
-	char *status;
-	int status_len = 0;
-	status_codes *sc = srv->status_codes;
-	
-	char *hdr1 = NULL;
-	char *hdr2 = NULL;
-	
-	int hdr1_len = 0;
-	int hdr2_len = 0;
-	
-	/* headers */
-	if (resp->content_type != NULL) {
-		resp->content_type_len = strlen(resp->content_type);
-		hdr1_len = 16+resp->content_type_len;
-	} else {
-		resp->content_type_len = 0;
-	}
-	
-	if (hdr1_len > 0) {
-		hdr1 = malloc(hdr1_len+1);
-		hdr1_len = sprintf(hdr1, "\r\nContent-Type: %s", resp->content_type);
-	}
-	
-	if (resp->data_len > 0) {
-		hdr2_len = 30; /* 18 + 12 */
-		hdr2 = malloc(hdr2_len+1);
-		hdr2_len = sprintf(hdr2, "\r\nContent-Length: %lu", resp->data_len);		
-	}
-
-	/* calculate len */
-	resp->http_packet_len = sc->HTTP_VER_LEN;
-	
-	switch (resp->status) {
-		case 200:
-			status = sc->HTTP_200;
-			status_len = sc->HTTP_200_LEN;
-		break;
-		
-		case 400:
-			status = sc->HTTP_400;
-			status_len = sc->HTTP_400_LEN;
-		break;
-		
-		case 404:
-			status = sc->HTTP_404;
-			status_len = sc->HTTP_404_LEN;
-		break;
-		
-		case 501:
-			status = sc->HTTP_501;
-			status_len = sc->HTTP_501_LEN;
-		break;
-		
-		case 500:
-		default:
-			status = sc->HTTP_500;
-			status_len = sc->HTTP_500_LEN;
-		break;
-	}
-	
-	resp->header_len = sc->HTTP_VER_LEN + status_len + hdr1_len + hdr2_len + srv->server_header_len+4;
-	
-	resp->http_packet_len = resp->header_len + resp->data_len;
-	
-	/* build http packet */
-	resp->http_packet = malloc(resp->http_packet_len+1);
-	
-	memcpy (resp->http_packet, sc->HTTP_VER, sc->HTTP_VER_LEN);
-	memcpy (resp->http_packet+sc->HTTP_VER_LEN, status, status_len);
-	
-	if (hdr1_len > 0) {
-		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len, hdr1, hdr1_len);
-	}
-	
-	if (hdr2_len > 0) {
-		memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len, hdr2, hdr2_len);
-	}	
-	
-	memcpy (resp->http_packet+sc->HTTP_VER_LEN+status_len+hdr1_len+hdr2_len, srv->server_header, srv->server_header_len);
-	
-	memcpy (resp->http_packet+resp->header_len-4, "\r\n\r\n", 4);
-	memcpy (resp->http_packet+resp->header_len, resp->data, resp->data_len);
-	memcpy (resp->http_packet+resp->header_len+resp->data_len, "\0", 1);
-	
-	/* free some memory */
-	if (hdr1 != NULL) {
-		free (hdr1);
-	}
-	
-	if (hdr2 != NULL) {
-		free (hdr2);
-	}
-	
-	if (resp->status == 200) {
-		/* only free this if it's a 200 OK */
-		/* all the other response types is loaded into memory */
-		free (resp->data);
-		resp->data = NULL;
-	}	
-	
-	return 0;
-}
-
-int response_read_file(server *srv, connection *conn, file_item *f) {
-	response *resp = conn->response;
-	
-	if (f->fd == NULL) {
-		/* not a cached file descriptor, open it again */
-		if (f->filename_len == 0) {
-			response_get_index_file (srv, f);
-		} else if (response_file_exist(f->abs_path) == 0) {
-			response_get_index_file (srv, f);
-		}
-		
-		if (!(f->fd = fopen(f->abs_path, "rb"))) {
-			return errno;
-		}
-
-		/* get file size */
-		fseek (f->fd, 0, SEEK_END);
-		f->size = ftell(f->fd);
-		fseek (f->fd, 0, SEEK_SET);
-		
-		if (srv->config->cache_files == CACHE_FD) {
-			++srv->cache_open_fds;
-		}
-	}
-	
-	if (f->size < 1) {
-		fclose (f->fd);
-		f->fd = NULL;
-		return -EINVAL;
-	}
-	
-	/* allocate memory */
-	if (!(resp->data = malloc(f->size+1))) {
-		fclose (f->fd);
-		f->fd = NULL;
-		safe_warn (srv, "could not allocate memory for file.");
-		return -ENOMEM;
-	}
-
-	/* read file contents into buffer */
-	fread (resp->data, f->size, 1, f->fd);
-	fseek (f->fd, 0, SEEK_SET);
-	
-	resp->data_len = f->size;
-	
-	/* dont't cache file descriptors, close it */
-	if (srv->config->cache_files != CACHE_FD) {
-		fclose (f->fd);
-		f->fd = NULL;
-	}
-
-	return 0;
-}
-
-int response_file_exist(char *filename) {
-	/* check if a file exists on disc */
-	struct stat sts;
-	if (stat(filename, &sts) == -1 && errno == ENOENT) {
-    		return 0;
-	}
-	
-	if (S_ISDIR(sts.st_mode)) {
-		return 0;
-	}
-	
-	return 1;
-}
-
-int response_get_index_file(server *srv, file_item *f) {
-	/* get index file */
-	int len = 0;
-	char *abs_path = malloc(f->abs_path_len+strlen(srv->config->index_file)+2);
-	
-	memcpy (abs_path, f->abs_path, f->abs_path_len);
-	
-	if (f->abs_path[f->abs_path_len-1] == '/') {
-		memcpy (abs_path+f->abs_path_len, srv->config->index_file, strlen(srv->config->index_file)+1);
-		len = f->abs_path_len + strlen(srv->config->index_file);
-	} else {
-		memcpy (abs_path+f->abs_path_len, "/", 1);
-		memcpy (abs_path+f->abs_path_len+1, srv->config->index_file, strlen(srv->config->index_file)+1);
-		len = f->abs_path_len + strlen(srv->config->index_file) + 1;
-	}
-	
-	free (f->abs_path);
-	
-	f->abs_path = abs_path;
-	f->abs_path_len = len;
-	
-	f->filename = srv->config->index_file;
-	f->filename_len = strlen(f->filename);
-	
-	return 0;
-}
-
 int response_free(response *resp) {
 	if (resp->headers != NULL) {
 		free (resp->headers);
@@ -397,18 +415,4 @@ int response_free(response *resp) {
 	free (resp);
 	
 	return 0;
-}
-
-char *response_char2hex(char *str) {
-	int str_len = strlen(str);
-	char *new = malloc(str_len*3+1);
-	int i;
-	
-	memcpy (new, "\0", 1);
-	
-	for (i = 0; i < str_len; ++i) {
-		sprintf (new, "%s%02X", new, (unsigned char) str[i]);
-	}
-	
-	return new;
 }

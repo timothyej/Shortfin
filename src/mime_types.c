@@ -1,6 +1,6 @@
 #include "mime_types.h"
 
-int mime_types_add(char *ext, char *mime, cache *c) {
+static int mime_types_add(char *ext, char *mime, cache *c) {
 	char *value = strdup(mime);
 
 	cache_add (c, ext, value);
