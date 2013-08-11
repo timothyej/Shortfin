@@ -4,7 +4,7 @@
 
 #include "response.h"
 
-response *response_init(server *srv) {
+static response *response_init(server *srv) {
 	/* init a new response struct */
 	response *resp = malloc(sizeof(response));
 	

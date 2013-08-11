@@ -3,7 +3,6 @@
 
 #include "base.h"
 
-response *response_init(server *srv);
 int response_build(server *srv, connection *conn);
 
 int response_build_http_packet(server *srv, response *resp);
