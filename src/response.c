@@ -129,6 +129,33 @@ static int response_build_http_packet(server *srv, response *resp) {
 	return 0;
 }
 
+static int response_get_index_file(server *srv, file_item *f) {
+	/* get index file */
+	int len = 0;
+	char *abs_path = malloc(f->abs_path_len+strlen(srv->config->index_file)+2);
+
+	memcpy (abs_path, f->abs_path, f->abs_path_len);
+
+	if (f->abs_path[f->abs_path_len-1] == '/') {
+		memcpy (abs_path+f->abs_path_len, srv->config->index_file, strlen(srv->config->index_file)+1);
+		len = f->abs_path_len + strlen(srv->config->index_file);
+	} else {
+		memcpy (abs_path+f->abs_path_len, "/", 1);
+		memcpy (abs_path+f->abs_path_len+1, srv->config->index_file, strlen(srv->config->index_file)+1);
+		len = f->abs_path_len + strlen(srv->config->index_file) + 1;
+	}
+
+	free (f->abs_path);
+
+	f->abs_path = abs_path;
+	f->abs_path_len = len;
+
+	f->filename = srv->config->index_file;
+	f->filename_len = strlen(f->filename);
+
+	return 0;
+}
+
 static int response_read_file(server *srv, connection *conn, file_item *f) {
 	response *resp = conn->response;
 
@@ -359,33 +386,6 @@ int response_file_exist(char *filename) {
 	}
 	
 	return 1;
-}
-
-int response_get_index_file(server *srv, file_item *f) {
-	/* get index file */
-	int len = 0;
-	char *abs_path = malloc(f->abs_path_len+strlen(srv->config->index_file)+2);
-	
-	memcpy (abs_path, f->abs_path, f->abs_path_len);
-	
-	if (f->abs_path[f->abs_path_len-1] == '/') {
-		memcpy (abs_path+f->abs_path_len, srv->config->index_file, strlen(srv->config->index_file)+1);
-		len = f->abs_path_len + strlen(srv->config->index_file);
-	} else {
-		memcpy (abs_path+f->abs_path_len, "/", 1);
-		memcpy (abs_path+f->abs_path_len+1, srv->config->index_file, strlen(srv->config->index_file)+1);
-		len = f->abs_path_len + strlen(srv->config->index_file) + 1;
-	}
-	
-	free (f->abs_path);
-	
-	f->abs_path = abs_path;
-	f->abs_path_len = len;
-	
-	f->filename = srv->config->index_file;
-	f->filename_len = strlen(f->filename);
-	
-	return 0;
 }
 
 int response_free(response *resp) {
