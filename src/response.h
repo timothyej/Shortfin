@@ -1,10 +1,6 @@
 #ifndef _RESPONSE_H_
 #define _RESPONSE_H_
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-
 #include "base.h"
 
 response *response_init(server *srv);
