@@ -1,3 +1,6 @@
+#include <fcntl.h>
+#include <netinet/tcp.h>
+
 #include "socket.h"
 
 sock *socket_init() {

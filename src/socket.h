@@ -1,9 +1,6 @@
 #ifndef _SOCKET_H_
 #define _SOCKET_H_
 
-#include <fcntl.h>
-#include <netinet/tcp.h>
-
 #include "base.h"
 
 sock *socket_init();
