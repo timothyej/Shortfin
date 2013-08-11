@@ -1,3 +1,10 @@
+#define _GNU_SOURCE
+#include <linux/sched.h>
+#include <sched.h>
+#include <sys/epoll.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 #include "worker.h"
 
 static int worker_server(void *p);
