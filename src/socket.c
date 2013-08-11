@@ -14,6 +14,38 @@ sock *socket_init() {
     	return s;
 }
 
+static int socket_listen_setup(master_server *master_srv, int fd) {
+	/* disable / enable the Nagle (TCP No Delay) algorithm */
+	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&master_srv->config->tcp_nodelay, sizeof(master_srv->config->tcp_nodelay)) == -1) {
+		perror ("ERROR setsockopt(TCP_NODELAY)");
+		return -1;
+	}
+
+	/* set send buffer size */
+	if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char*)&master_srv->config->write_buffer_size, sizeof(master_srv->config->write_buffer_size)) == -1) {
+		perror ("ERROR setsockopt(SO_SNDBUF)");
+		return -1;
+	}
+
+	/* set read buffer size */
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&master_srv->config->read_buffer_size, sizeof(master_srv->config->read_buffer_size)) == -1) {
+		perror ("ERROR setsockopt(SO_RCVBUF)");
+		return -1;
+	}
+
+	/* set defer accept to 5 sec */
+	int val = 5;
+	if (setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, (char*)&val, sizeof(int)) == -1) {
+		perror ("ERROR setsockopt(TCP_DEFER_ACCEPT)");
+		return -1;
+	}
+
+	/* non-blocking socket */
+	socket_setnonblocking (fd);
+
+	return 0;
+}
+
 int socket_listen(server *srv) {
 	sock *s = srv->server_socket;
 
@@ -76,38 +108,6 @@ int socket_close(sock *s) {
 
 int socket_free(sock *s) {
 	free (s);
-	return 0;
-}
-
-int socket_listen_setup(master_server *master_srv, int fd) {
-	/* disable / enable the Nagle (TCP No Delay) algorithm */
-	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&master_srv->config->tcp_nodelay, sizeof(master_srv->config->tcp_nodelay)) == -1) {
-		perror ("ERROR setsockopt(TCP_NODELAY)");
-		return -1;
-	}
-	
-	/* set send buffer size */
-	if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char*)&master_srv->config->write_buffer_size, sizeof(master_srv->config->write_buffer_size)) == -1) {
-		perror ("ERROR setsockopt(SO_SNDBUF)");
-		return -1;
-	}
-	
-	/* set read buffer size */
-	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&master_srv->config->read_buffer_size, sizeof(master_srv->config->read_buffer_size)) == -1) {
-		perror ("ERROR setsockopt(SO_RCVBUF)");
-		return -1;
-	}
-	
-	/* set defer accept to 5 sec */
-	int val = 5;
-	if (setsockopt(fd, IPPROTO_TCP, TCP_DEFER_ACCEPT, (char*)&val, sizeof(int)) == -1) {
-		perror ("ERROR setsockopt(TCP_DEFER_ACCEPT)");
-		return -1;
-	}
-	
-	/* non-blocking socket */
-	socket_setnonblocking (fd);
-	
 	return 0;
 }
 
