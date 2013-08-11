@@ -129,6 +129,61 @@ static int response_build_http_packet(server *srv, response *resp) {
 	return 0;
 }
 
+static int response_read_file(server *srv, connection *conn, file_item *f) {
+	response *resp = conn->response;
+
+	if (f->fd == NULL) {
+		/* not a cached file descriptor, open it again */
+		if (f->filename_len == 0) {
+			response_get_index_file (srv, f);
+		} else if (response_file_exist(f->abs_path) == 0) {
+			response_get_index_file (srv, f);
+		}
+
+		if (!(f->fd = fopen(f->abs_path, "rb"))) {
+			return errno;
+		}
+
+		/* get file size */
+		fseek (f->fd, 0, SEEK_END);
+		f->size = ftell(f->fd);
+		fseek (f->fd, 0, SEEK_SET);
+
+		if (srv->config->cache_files == CACHE_FD) {
+			++srv->cache_open_fds;
+		}
+	}
+
+	if (f->size < 1) {
+		fclose (f->fd);
+		f->fd = NULL;
+		return -EINVAL;
+	}
+
+	/* allocate memory */
+	if (!(resp->data = malloc(f->size+1))) {
+		fclose (f->fd);
+		f->fd = NULL;
+		safe_warn (srv, "could not allocate memory for file.");
+		return -ENOMEM;
+	}
+
+	/* read file contents into buffer */
+	fread (resp->data, f->size, 1, f->fd);
+	fseek (f->fd, 0, SEEK_SET);
+
+	resp->data_len = f->size;
+
+	/* dont't cache file descriptors, close it */
+	if (srv->config->cache_files != CACHE_FD) {
+		fclose (f->fd);
+		f->fd = NULL;
+	}
+
+	return 0;
+}
+
+
 int response_build(server *srv, connection *conn) {
 	/* build the response */
 	conn->response = response_init(srv);
@@ -287,60 +342,6 @@ int response_build(server *srv, connection *conn) {
 
 	if (f != NULL) {
 		f->http_status = resp->status;
-	}
-
-	return 0;
-}
-
-int response_read_file(server *srv, connection *conn, file_item *f) {
-	response *resp = conn->response;
-	
-	if (f->fd == NULL) {
-		/* not a cached file descriptor, open it again */
-		if (f->filename_len == 0) {
-			response_get_index_file (srv, f);
-		} else if (response_file_exist(f->abs_path) == 0) {
-			response_get_index_file (srv, f);
-		}
-		
-		if (!(f->fd = fopen(f->abs_path, "rb"))) {
-			return errno;
-		}
-
-		/* get file size */
-		fseek (f->fd, 0, SEEK_END);
-		f->size = ftell(f->fd);
-		fseek (f->fd, 0, SEEK_SET);
-		
-		if (srv->config->cache_files == CACHE_FD) {
-			++srv->cache_open_fds;
-		}
-	}
-	
-	if (f->size < 1) {
-		fclose (f->fd);
-		f->fd = NULL;
-		return -EINVAL;
-	}
-	
-	/* allocate memory */
-	if (!(resp->data = malloc(f->size+1))) {
-		fclose (f->fd);
-		f->fd = NULL;
-		safe_warn (srv, "could not allocate memory for file.");
-		return -ENOMEM;
-	}
-
-	/* read file contents into buffer */
-	fread (resp->data, f->size, 1, f->fd);
-	fseek (f->fd, 0, SEEK_SET);
-	
-	resp->data_len = f->size;
-	
-	/* dont't cache file descriptors, close it */
-	if (srv->config->cache_files != CACHE_FD) {
-		fclose (f->fd);
-		f->fd = NULL;
 	}
 
 	return 0;
