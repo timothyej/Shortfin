@@ -1,6 +1,6 @@
 #include "request.h"
 
-char *strtolower(char *str) {
+static char *strtolower(char *str) {
 	if (str == NULL) return str;
 	int i;
 	for (i = 0; str[i]; ++i) {
@@ -9,7 +9,7 @@ char *strtolower(char *str) {
 	return str;
 }
 
-request *request_init(server *srv) {
+static request *request_init(server *srv) {
 	/* init a new request struct */
 	int i;
 	
