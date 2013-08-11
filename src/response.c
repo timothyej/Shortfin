@@ -224,6 +224,19 @@ static int response_read_file(server *srv, connection *conn, file_item *f) {
 	return 0;
 }
 
+static char *response_char2hex(char *str) {
+	int str_len = strlen(str);
+	char *new = malloc(str_len*3+1);
+	int i;
+
+	memcpy (new, "\0", 1);
+
+	for (i = 0; i < str_len; ++i) {
+		sprintf (new, "%s%02X", new, (unsigned char) str[i]);
+	}
+
+	return new;
+}
 
 int response_build(server *srv, connection *conn) {
 	/* build the response */
@@ -402,18 +415,4 @@ int response_free(response *resp) {
 	free (resp);
 	
 	return 0;
-}
-
-char *response_char2hex(char *str) {
-	int str_len = strlen(str);
-	char *new = malloc(str_len*3+1);
-	int i;
-	
-	memcpy (new, "\0", 1);
-	
-	for (i = 0; i < str_len; ++i) {
-		sprintf (new, "%s%02X", new, (unsigned char) str[i]);
-	}
-	
-	return new;
 }
