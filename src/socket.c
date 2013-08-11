@@ -62,6 +62,16 @@ static int socket_listen_setup(master_server *master_srv, int fd) {
 	return 0;
 }
 
+int socket_setquickack(int fd) {
+	int arg = 0;
+	if (setsockopt(fd, IPPROTO_TCP, TCP_QUICKACK, (char*)&arg, sizeof(arg)) == -1) {
+		perror ("ERROR setsockopt(TCP_QUICKACK)");
+		return -1;
+	}
+
+	return 0;
+}
+
 int socket_listen(server *srv) {
 	sock *s = srv->server_socket;
 
@@ -143,16 +153,6 @@ int socket_setup(master_server *master_srv, int fd) {
 	/* set read buffer size */
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&master_srv->config->read_buffer_size, sizeof(master_srv->config->read_buffer_size)) == -1) {
 		perror ("ERROR setsockopt(SO_RCVBUF)");
-		return -1;
-	}
-	
-	return 0;
-}
-
-int socket_setquickack(int fd) {
-	int arg = 0;
-	if (setsockopt(fd, IPPROTO_TCP, TCP_QUICKACK, (char*)&arg, sizeof(arg)) == -1) {
-		perror ("ERROR setsockopt(TCP_QUICKACK)");
 		return -1;
 	}
 	
